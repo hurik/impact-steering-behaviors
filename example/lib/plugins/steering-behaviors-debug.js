@@ -35,49 +35,46 @@ ig.Entity.inject({
 		this.parent();
 
 		if(ig.Entity._wander && this.wanderActive) {
-			var vEntityCenter = ig.Vector2D.add(this.pos, ig.Vector2D.scalarDivi(this.size, 2));
-			
-			var vCircleCenter = ig.Vector2D.add(vEntityCenter, ig.Vector2D.scalarMult(this.vHeading, this.wanderDistance));
+			var vCircleCenter = ig.Vector2D.add(this.vEntityCenter, ig.Vector2D.scalarMult(this.vHeading, this.wanderDistance));
 			var vMovementPointer = ig.Vector2D.add(vCircleCenter, this.vWanderTargert);
 
-			this._drawLine(vEntityCenter, vCircleCenter, 1, 255, 0, 0, 0.5);
+			this._drawLine(this.vEntityCenter, vCircleCenter, 1, 255, 0, 0, 0.5);
 			this._drawCircle(vCircleCenter, this.wanderRadius, 1, 255, 0, 0, 0.5);
 			this._drawCircle(vMovementPointer, 1, 2, 255, 0, 0, 0.5);
 		}
 
 		if(ig.Entity._avoidance && this.avoidanceActive) {
-			var vEntityCenter = ig.Vector2D.add(this.pos, ig.Vector2D.scalarDivi(this.size, 2));
 			var distance = ig.Vector2D.length(this.vel) + this.size.y;
 			var farDistance = ig.Vector2D.length(this.vel) + this.size.y * 2;
 
 			// Far left
-			var vStart = ig.Vector2D.add(vEntityCenter, ig.Vector2D.add(ig.Vector2D.scalarMult(this.vHeading, -this.size.y / 2), ig.Vector2D.scalarMult(this.vHeadingPerp, -this.size.x)));
+			var vStart = ig.Vector2D.add(this.vEntityCenter, ig.Vector2D.add(ig.Vector2D.scalarMult(this.vHeading, -this.size.y / 2), ig.Vector2D.scalarMult(this.vHeadingPerp, -this.size.x)));
 			var vEnd = ig.Vector2D.add(vStart, ig.Vector2D.scalarMult(this.vHeading, farDistance));
 
 			this._drawLine(vStart, vEnd, 1, 255, 0, 0, 0.5);
 
 			// Front left
-			vStart = ig.Vector2D.add(vEntityCenter, ig.Vector2D.add(ig.Vector2D.scalarMult(this.vHeading, this.size.y / 2), ig.Vector2D.scalarMult(this.vHeadingPerp, -this.size.x * 1 / 4)));
+			vStart = ig.Vector2D.add(this.vEntityCenter, ig.Vector2D.add(ig.Vector2D.scalarMult(this.vHeading, this.size.y / 2), ig.Vector2D.scalarMult(this.vHeadingPerp, -this.size.x * 1 / 4)));
 			vEnd = ig.Vector2D.add(vStart, ig.Vector2D.scalarMult(this.vHeading, distance));
 
 			this._drawLine(vStart, vEnd, 1, 255, 0, 0, 0.5);
 
 			// Front right
-			vStart = ig.Vector2D.add(vEntityCenter, ig.Vector2D.add(ig.Vector2D.scalarMult(this.vHeading, this.size.y / 2), ig.Vector2D.scalarMult(this.vHeadingPerp, this.size.x * 1 / 4)));
+			vStart = ig.Vector2D.add(this.vEntityCenter, ig.Vector2D.add(ig.Vector2D.scalarMult(this.vHeading, this.size.y / 2), ig.Vector2D.scalarMult(this.vHeadingPerp, this.size.x * 1 / 4)));
 			vEnd = ig.Vector2D.add(vStart, ig.Vector2D.scalarMult(this.vHeading, distance));
 
 			this._drawLine(vStart, vEnd, 1, 255, 0, 0, 0.5);
 
 			// Far right
-			vStart = ig.Vector2D.add(vEntityCenter, ig.Vector2D.add(ig.Vector2D.scalarMult(this.vHeading, -this.size.y / 2), ig.Vector2D.scalarMult(this.vHeadingPerp, this.size.x)));
+			vStart = ig.Vector2D.add(this.vEntityCenter, ig.Vector2D.add(ig.Vector2D.scalarMult(this.vHeading, -this.size.y / 2), ig.Vector2D.scalarMult(this.vHeadingPerp, this.size.x)));
 			vEnd = ig.Vector2D.add(vStart, ig.Vector2D.scalarMult(this.vHeading, farDistance));
 
 			this._drawLine(vStart, vEnd, 1, 255, 0, 0, 0.5);
 
 			// Sterring force
-			var vSteeringForce = ig.Vector2D.add(vEntityCenter, this.avoidance());
+			var vSteeringForce = ig.Vector2D.add(this.vEntityCenter, this.avoidance());
 
-			this._drawLine(vEntityCenter, vSteeringForce, 1, 0, 255, 0, 0.5);
+			this._drawLine(this.vEntityCenter, vSteeringForce, 1, 0, 255, 0, 0.5);
 		}
 
 	},

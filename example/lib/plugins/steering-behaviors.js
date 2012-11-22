@@ -33,6 +33,11 @@ ig.Entity.inject({
 	maxSpeed: 500,
 	maxForce: 500,
 
+	vEntityCenter: {
+		x: 0,
+		y: 0
+	},
+
 	bounciness: 1,
 	minBounceVelocity: 0,
 
@@ -75,7 +80,6 @@ ig.Entity.inject({
 	fleeFromPos: null,
 
 	// ---------- Internal ----------
-
 	// wander() internal
 	vWanderTargert: {
 		x: 0,
@@ -112,6 +116,10 @@ ig.Entity.inject({
 		var res = ig.game.collisionMap.trace(
 		this.pos.x, this.pos.y, mx, my, this.size.x, this.size.y);
 		this.handleMovementTrace(res);
+
+		// Update vEntityCenter
+		this.vEntityCenter.x = this.pos.x + (this.size.x / 2);
+		this.vEntityCenter.y = this.pos.y + (this.size.y / 2);
 
 		if(res.collision.x || res.collision.y) {
 			ig.log('collision!');
@@ -274,32 +282,31 @@ ig.Entity.inject({
 	avoidance: function() {
 		var vSteeringForce = ig.Vector2D.zero();
 
-		var vEntityCenter = ig.Vector2D.add(this.pos, ig.Vector2D.scalarMult(this.size, 1 / 2));
 		var distance = ig.Vector2D.length(this.vel) + this.size.y;
 		var farDistance = ig.Vector2D.length(this.vel) + this.size.y * 2;
 
 		var collisions = new Array(4);
 
 		// Far left
-		var vStart = ig.Vector2D.add(vEntityCenter, ig.Vector2D.add(ig.Vector2D.scalarMult(this.vHeading, -this.size.y / 2), ig.Vector2D.scalarMult(this.vHeadingPerp, -this.size.x)));
+		var vStart = ig.Vector2D.add(this.vEntityCenter, ig.Vector2D.add(ig.Vector2D.scalarMult(this.vHeading, -this.size.y / 2), ig.Vector2D.scalarMult(this.vHeadingPerp, -this.size.x)));
 		var vEnd = ig.Vector2D.add(vStart, ig.Vector2D.scalarMult(this.vHeading, farDistance));
 
 		collisions[0] = ig.game.collisionMap._traceLosStep(vStart.x, vStart.y, vEnd.x, vEnd.y);
 
 		// Front left
-		vStart = ig.Vector2D.add(vEntityCenter, ig.Vector2D.add(ig.Vector2D.scalarMult(this.vHeading, this.size.y / 2), ig.Vector2D.scalarMult(this.vHeadingPerp, -this.size.x * 1 / 2)));
+		vStart = ig.Vector2D.add(this.vEntityCenter, ig.Vector2D.add(ig.Vector2D.scalarMult(this.vHeading, this.size.y / 2), ig.Vector2D.scalarMult(this.vHeadingPerp, -this.size.x * 1 / 2)));
 		vEnd = ig.Vector2D.add(vStart, ig.Vector2D.scalarMult(this.vHeading, distance));
 
 		collisions[1] = ig.game.collisionMap._traceLosStep(vStart.x, vStart.y, vEnd.x, vEnd.y);
 
 		// Front right
-		vStart = ig.Vector2D.add(vEntityCenter, ig.Vector2D.add(ig.Vector2D.scalarMult(this.vHeading, this.size.y / 2), ig.Vector2D.scalarMult(this.vHeadingPerp, this.size.x * 1 / 2)));
+		vStart = ig.Vector2D.add(this.vEntityCenter, ig.Vector2D.add(ig.Vector2D.scalarMult(this.vHeading, this.size.y / 2), ig.Vector2D.scalarMult(this.vHeadingPerp, this.size.x * 1 / 2)));
 		vEnd = ig.Vector2D.add(vStart, ig.Vector2D.scalarMult(this.vHeading, distance));
 
 		collisions[2] = ig.game.collisionMap._traceLosStep(vStart.x, vStart.y, vEnd.x, vEnd.y);
 
 		// Far right
-		vStart = ig.Vector2D.add(vEntityCenter, ig.Vector2D.add(ig.Vector2D.scalarMult(this.vHeading, -this.size.y / 2), ig.Vector2D.scalarMult(this.vHeadingPerp, this.size.x)));
+		vStart = ig.Vector2D.add(this.vEntityCenter, ig.Vector2D.add(ig.Vector2D.scalarMult(this.vHeading, -this.size.y / 2), ig.Vector2D.scalarMult(this.vHeadingPerp, this.size.x)));
 		vEnd = ig.Vector2D.add(vStart, ig.Vector2D.scalarMult(this.vHeading, farDistance));
 
 		collisions[3] = ig.game.collisionMap._traceLosStep(vStart.x, vStart.y, vEnd.x, vEnd.y);
@@ -336,11 +343,11 @@ ig.Entity.inject({
 					this.avoidancePreferedDirection = 2;
 				}
 
-				var right = ig.Vector2D.add(vEntityCenter, ig.Vector2D.scalarMult(this.vHeadingPerp, this.size.x * 3));
-				var left = ig.Vector2D.add(vEntityCenter, ig.Vector2D.scalarMult(this.vHeadingPerp, -this.size.x * 3));
+				var right = ig.Vector2D.add(this.vEntityCenter, ig.Vector2D.scalarMult(this.vHeadingPerp, this.size.x * 3));
+				var left = ig.Vector2D.add(this.vEntityCenter, ig.Vector2D.scalarMult(this.vHeadingPerp, -this.size.x * 3));
 
-				var rightLenght = ig.game.collisionMap._traceLosStep(vEntityCenter.x, vEntityCenter.y, right.x, right.y);
-				var leftLenght = ig.game.collisionMap._traceLosStep(vEntityCenter.x, vEntityCenter.y, left.x, left.y);
+				var rightLenght = ig.game.collisionMap._traceLosStep(this.vEntityCenter.x, this.vEntityCenter.y, right.x, right.y);
+				var leftLenght = ig.game.collisionMap._traceLosStep(this.vEntityCenter.x, this.vEntityCenter.y, left.x, left.y);
 
 				if(rightLenght < leftLenght) {
 					this.avoidancePreferedDirection = 1;
@@ -408,7 +415,7 @@ ig.Entity.inject({
 		for(var i = 0; i < entities.length; i++) {
 			// Check if this entity is in distance
 			// For speedup we use the distance square function
-			if(ig.Vector2D.distanceSq(this.pos, entities[i].pos) < maxDistance) {
+			if(ig.Vector2D.distanceSq(this.vEntityCenter, entities[i].vEntityCenter) < maxDistance) {
 				// Put this entity on the nearEntitiesList
 				neighbors.push(entities[i]);
 			}
@@ -418,14 +425,13 @@ ig.Entity.inject({
 	},
 
 	seperation: function(neighbors) {
-		var vSteeringForce = ig.Vector2D.zero(),
-			vEntityCenter = ig.Vector2D.add(this.pos, ig.Vector2D.scalarMult(this.size, 1 / 2));
+		var vSteeringForce = ig.Vector2D.zero();
 
 		// Go through the neighbors
 		for(var i = 0; i < neighbors.length; i++) {
 			// Check if the current entity is not this entity
 			if(neighbors[i] != this && !ig.Vector2D.equals(neighbors[i].pos, this.pos)) {
-				if(!ig.game.collisionMap._traceLosStep(vEntityCenter.x, vEntityCenter.y, neighbors[i].pos.x + neighbors[i].size.x / 2, neighbors[i].pos.y + neighbors[i].size.y / 2)) {
+				if(!ig.game.collisionMap._traceLosStep(this.vEntityCenter.x, this.vEntityCenter.y, neighbors[i].vEntityCenter.x, neighbors[i].vEntityCenter.y)) {
 					// Vector2D: vToNeighbor = this.pos - neighbors[i].pos
 					var vToNeighbor = ig.Vector2D.sub(this.pos, neighbors[i].pos);
 
@@ -440,14 +446,13 @@ ig.Entity.inject({
 
 	alignment: function(neighbors) {
 		var vAverageHeading = ig.Vector2D.zero(),
-			neighborsCount = 0,
-			vEntityCenter = ig.Vector2D.add(this.pos, ig.Vector2D.scalarMult(this.size, 1 / 2));
+			neighborsCount = 0;
 
 		// Go through the neighbors
 		for(var i = 0; i < neighbors.length; i++) {
 			// Check if the current entity is not this entity
 			if(neighbors[i] != this) {
-				if(!ig.game.collisionMap._traceLosStep(vEntityCenter.x, vEntityCenter.y, neighbors[i].pos.x + neighbors[i].size.x / 2, neighbors[i].pos.y + neighbors[i].size.y / 2)) {
+				if(!ig.game.collisionMap._traceLosStep(this.vEntityCenter.x, this.vEntityCenter.y, neighbors[i].vEntityCenter.x, neighbors[i].vEntityCenter.y)) {
 					// Vector2D: vAverageHeading = vAverageHeading + neighbors[i].vHeading
 					vAverageHeading = ig.Vector2D.add(vAverageHeading, neighbors[i].vHeading);
 
@@ -470,14 +475,13 @@ ig.Entity.inject({
 	cohesion: function(neighbors) {
 		var vSteeringForce = ig.Vector2D.zero(),
 			vCenterOfMass = ig.Vector2D.zero(),
-			neighborsCount = 0,
-			vEntityCenter = ig.Vector2D.add(this.pos, ig.Vector2D.scalarMult(this.size, 1 / 2));
+			neighborsCount = 0;
 
 		// Go through the neighbors
 		for(var i = 0; i < neighbors.length; i++) {
 			// Check if the current entity is not this entity
 			if(neighbors[i] != this) {
-				if(!ig.game.collisionMap._traceLosStep(vEntityCenter.x, vEntityCenter.y, neighbors[i].pos.x + neighbors[i].size.x / 2, neighbors[i].pos.y + neighbors[i].size.y / 2)) {
+				if(!ig.game.collisionMap._traceLosStep(this.vEntityCenter.x, this.vEntityCenter.y, neighbors[i].vEntityCenter.x, neighbors[i].vEntityCenter.y)) {
 					// Vector2D: vCenterOfMass = vCenterOfMass + neighbors[i].pos
 					vCenterOfMass = ig.Vector2D.add(vCenterOfMass, neighbors[i].pos);
 
