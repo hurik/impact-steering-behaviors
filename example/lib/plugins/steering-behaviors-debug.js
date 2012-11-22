@@ -2,7 +2,7 @@
  * steering-behaviors
  * https://github.com/hurik/impact-steering-behaviors
  *
- * v0.1.0
+ * BETA
  *
  * IMPORTANT:
  * You need this plugins:

@@ -49,17 +49,18 @@ ig.Entity.inject({
 
 	// Calculation settings
 	avoidanceActive: false,
+	fleeActive: false,
 	separationActive: false,
 	alignmentActive: false,
 	cohesionActive: false,
 	wanderActive: false,
 
-	avoidanceWeight: 10,
+	avoidanceWeight: 20,
+	fleeWeight: 10,
 	separationWeight: 100,
 	alignmentWeight: 20,
 	cohesionWeight: 0.25,
 	wanderWeight: 4,
-
 
 	// wander() settings
 	wanderRadius: 20,
@@ -69,6 +70,9 @@ ig.Entity.inject({
 	// getNearEntities() settings
 	neighborsType: '',
 	neighborsDistance: 50,
+
+	// flee() settings
+	fleeFromPos: null,
 
 	// ---------- Internal ----------
 
@@ -134,6 +138,13 @@ ig.Entity.inject({
 			}
 		}
 
+		if(this.fleeActive) {
+			vForce = ig.Vector2D.scalarMult(this.flee(this.fleeFromPos), this.fleeWeight);
+
+			if(!this.accumulateForce(vSteeringForce, vForce)) {
+				return vSteeringForce;
+			}
+		}
 
 		if(this.separationActive || this.alignmentActive || this.cohesionActive) {
 			var neighbors = this.getNeighbors(this.neighborsDistance);

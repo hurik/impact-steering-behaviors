@@ -14,7 +14,7 @@ ig.module(
 	'plugins.steering-behaviors-debug',
 
 	// Entities
-	'game.entities.triangle',
+	'game.entities.sheep',
 
 	// Maps
 	'game.levels.example'

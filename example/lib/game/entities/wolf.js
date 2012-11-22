@@ -1,25 +1,20 @@
 ig.module(
-	'game.entities.triangle'
+	'game.entities.wolf'
 )
 .requires(
 	'impact.entity'
 )
 .defines(function() {
 
-EntityTriangle = ig.Entity.extend({
+EntityWolf = ig.Entity.extend({
 	size: {
 		x: 8,
 		y: 8
 	},
 
-	animSheet: new ig.AnimationSheet('media/triangle.png', 8, 8),
-
-	neighborsType: 'EntityTriangle',
+	animSheet: new ig.AnimationSheet('media/wolf.png', 8, 8),
 
 	wanderActive: true,
-	separationActive: true,
-	alignmentActive: true,
-	cohesionActive: true,
 	avoidanceActive: true,
 
 	init: function(x, y, settings) {
