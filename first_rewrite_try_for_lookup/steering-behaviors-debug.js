@@ -1,5 +1,5 @@
 /*
- * steering-behaviors-debug
+ * steering-behaviors
  * https://github.com/hurik/impact-steering-behaviors
  *
  * BETA
@@ -7,7 +7,7 @@
  * IMPORTANT:
  * You need this plugins:
  * line-of-sight - https://github.com/hurik/impact-line-of-sight
- * vec2          - https://github.com/hurik/impact-vec2
+ * vector2d      - https://github.com/hurik/impact-vector2d
  *
  * Andreas Giemza
  * andreas@giemza.net
@@ -34,13 +34,33 @@ ig.Entity.inject({
 		this.parent();
 
 		if(ig.Entity._wander && this.wanderActive) {
-			var vCircleCenter = this.vHeading.clone().scale(this.wanderDistance).add(this.vEntityCenter);
+			var vCircleCenter = new this.vHeading.clone(this.vHeading).scale(this.wanderDistance).add(this.vEntityCenter);
 			var vMovementPointer = ig.Vec2.sum(vCircleCenter, this.vWanderTargert);
 
 			this._drawLine(this.vEntityCenter, vCircleCenter, 1, 255, 0, 0, 0.5);
 			this._drawCircle(vCircleCenter, this.wanderRadius, 1, 255, 0, 0, 0.5);
 			this._drawCircle(vMovementPointer, 1, 2, 255, 0, 0, 0.5);
 		}
+
+		if(ig.Entity._avoidance && this.avoidanceActive) {
+			// Far left
+			this._drawLine(this.vAvoidanceFarLeftStart, this.vAvoidanceFarLeftEnd, 1, 255, 0, 0, 0.5);
+
+			// Front left
+			this._drawLine(this.vAvoidanceFrontLeftStart, this.vAvoidanceFrontLeftEnd, 1, 255, 0, 0, 0.5);
+
+			// Front right
+			this._drawLine(this.vAvoidanceFrontRightStart, this.vAvoidanceFrontRightEnd, 1, 255, 0, 0, 0.5);			
+
+			// Far right
+			this._drawLine(this.vAvoidanceFarRightStart, this.vAvoidanceFarRightEnd, 1, 255, 0, 0, 0.5);
+
+			/*// Sterring force
+			var vSteeringForce = ig.Vector2D.add(this.vEntityCenter, this.avoidance());
+
+			this._drawLine(this.vEntityCenter, vSteeringForce, 1, 0, 255, 0, 0.5);*/
+		}
+
 	},
 
 	_drawCircle: function(vect, radius, width, r, g, b, a) {
@@ -67,6 +87,7 @@ ig.Entity.inject({
 });
 
 ig.Entity._wander = false;
+ig.Entity._avoidance = false;
 
 ig.debug.addPanel({
 	type: ig.DebugPanel,
@@ -77,6 +98,10 @@ ig.debug.addPanel({
 		name: 'Wander',
 		object: ig.Entity,
 		property: '_wander'
+	}, {
+		name: 'Avoidance',
+		object: ig.Entity,
+		property: '_avoidance'
 	}]
 });
 

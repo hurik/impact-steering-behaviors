@@ -14,9 +14,6 @@ EntityWolf = ig.Entity.extend({
 
 	animSheet: new ig.AnimationSheet('media/wolf.png', 8, 8),
 
-	wanderActive: true,
-	avoidanceActive: true,
-
 	init: function(x, y, settings) {
 		this.addAnim('idle', 5, [0]);
 

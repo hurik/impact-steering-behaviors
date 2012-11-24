@@ -7,7 +7,7 @@ ig.module(
 	// Plugins
 	'plugins.line-of-sight',
 	'plugins.steering-behaviors',
-	'plugins.vector2d',
+	'plugins.vec2',
 
 	// Debug
 	'impact.debug.debug',
@@ -45,6 +45,6 @@ MyGame = ig.Game.extend({
 
 // Start the Game with 60fps, a resolution of 320x240, scaled
 // up by a factor of 2
-ig.main( '#canvas', MyGame, 60, 400, 240, 1 );
+ig.main('#canvas', MyGame, 60, 400, 240, 1);
 
 });
