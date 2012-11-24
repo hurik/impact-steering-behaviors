@@ -30,11 +30,14 @@ ig.module(
 
 ig.Entity.inject({
 	// ----- Global settings -----
+	
 	maxForce: 10,
+	// maxSpeed is limiting the vel, maxVel is not used anymore
 	maxSpeed: 50,
 
 
 	// ----- Steering behaviors settings -----
+	
 	// Wander
 	wanderRadius: 16,
 	wanderDistance: 12,
@@ -42,15 +45,19 @@ ig.Entity.inject({
 
 
 	// ----- Steering behaviors weight -----
+	
 	wanderWeight: 1,
 
 
 	// ----- Steering behaviors switches -----
+	
 	wanderActive: true,
 
 
 	// ----- Internal -----	
-	// Calculation internal
+	
+	// Important variables
+	
 	// Center of the entity
 	vEntityCenter: new ig.Vec2(0, 0),
 	// Heading of the entity (normalized vel)
@@ -59,10 +66,12 @@ ig.Entity.inject({
 	vHeadingPerp: new ig.Vec2(1, 0),
 
 	// Wander internal
+	
 	vWanderTargert: new ig.Vec2(0, 0),
 
 
 	// ----- Impact options -----
+	
 	// For better collision resolution, so no entity get stucked 
 	bounciness: 1,
 	minBounceVelocity: 0,
@@ -83,17 +92,6 @@ ig.Entity.inject({
 		// Get the current speed
 		var speed = Math.sqrt(this.vel.x * this.vel.x + this.vel.y * this.vel.y);
 
-		// Update the vHeading and vHeadingPerp only when the speed is bigger than 0
-		if(speed > 0) {
-			// Set the vHeading
-			this.vHeading.x = this.vel.x / speed;
-			this.vHeading.y = this.vel.y / speed;
-
-			// Set the vHeadingPerp
-			this.vHeadingPerp.x = -this.vHeading.y;
-			this.vHeadingPerp.y = this.vHeading.x;
-		}
-
 		// Check if it is not bigger than the maxSpeed
 		if(speed > this.maxSpeed) {
 			this.vel.x = this.vel.x / speed * this.maxSpeed;
@@ -111,6 +109,20 @@ ig.Entity.inject({
 		this.vEntityCenter.x = this.pos.x + (this.size.x / 2);
 		this.vEntityCenter.y = this.pos.y + (this.size.y / 2);
 
+		// We need to recalculate it, becaused it could been truncated
+		speed = Math.sqrt(this.vel.x * this.vel.x + this.vel.y * this.vel.y);
+
+		// Update the vHeading and vHeadingPerp only when the speed is bigger than 0
+		if(speed > 0) {
+			// Set the vHeading, it the vel nomalized
+			this.vHeading.x = this.vel.x / speed;
+			this.vHeading.y = this.vel.y / speed;
+
+			// Set the vHeadingPerp
+			this.vHeadingPerp.x = -this.vHeading.y;
+			this.vHeadingPerp.y = this.vHeading.x;
+		}
+
 		// Update the animation
 		if(this.currentAnim) {
 			this.currentAnim.update();
@@ -125,11 +137,15 @@ ig.Entity.inject({
 			vForce = new ig.Vec2(0, 0);
 
 		if(this.wanderActive) {
+			// Get the force
 			this.wander(vForce);
 
+			// Scale it with its weight
 			vForce.scale(this.wanderWeight);
 
+			// Add it to vSteeringForce
 			if(!this.accumulateForce(vSteeringForce, vForce)) {
+				// Nothing left ...
 				return vSteeringForce;
 			}
 		}
@@ -138,33 +154,44 @@ ig.Entity.inject({
 	},
 
 	accumulateForce: function(vSteeringForce, vForceToAdd) {
-		var lengthSoFar = vSteeringForce.magnitude();
-		var lengthRemaining = this.maxForce - lengthSoFar;
+		// Get the current magnitude of thevSteeringForce
+		var magnitudeSoFar = vSteeringForce.magnitude();
+		// Calculate the remaining magnitude
+		var magnitudeRemaining = this.maxForce - magnitudeSoFar;
 
-		if(lengthRemaining <= 0.000000001) {
+		// When nothing is left return
+		if(magnitudeRemaining <= 0.000000001) {
 			return false;
 		}
 
-		var lengthToAdd = vForceToAdd.magnitude();
+		// Get the magnitude of the vForceToAdd
+		var magnitudeToAdd = vForceToAdd.magnitude();
 
-		if(lengthToAdd < lengthRemaining) {
+		// Check if the magnitudeToAdd is smaller magnitudeRemaining
+		if(magnitudeToAdd < magnitudeRemaining) {
+			// It was smaller, only need to add vForceToAdd to vSteeringForce
 			vSteeringForce.add(vForceToAdd);
 		} else {
-			vSteeringForce.add(vForceToAdd.normalize().scale(lengthRemaining));
+			// It was bigger, so we normalize vForceToAdd and scale it with the magnitudeRemaining
+			vSteeringForce.add(vForceToAdd.normalize().scale(magnitudeRemaining));
 		}
 
 		return true;
 	},
 
 	wander: function(vForce) {
+		// Add a random vector to the vWanderTarget
 		this.vWanderTargert.x += (Math.random() * 2 - 1) * this.wanderJitter * ig.system.tick;
 		this.vWanderTargert.y += (Math.random() * 2 - 1) * this.wanderJitter * ig.system.tick;
 
+		// Then normalize it and scale it to the wanderRadius
 		this.vWanderTargert.normalize().scale(this.wanderRadius);
 
+		// Set vForce to the current heading (vHeading)
 		vForce.x = this.vHeading.x;
 		vForce.y = this.vHeading.y;
 
+		// Scale it wanderDistance, add the vWanderTarget and substract the velocity
 		vForce.scale(this.wanderDistance).add(this.vWanderTargert).subtract(this.vel);
 	}
 });
