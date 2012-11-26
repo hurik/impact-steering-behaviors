@@ -2,7 +2,7 @@
  * Vec2
  * https://github.com/hurik/impact-vec2
  *
- * v1.0.0
+ * v1.1.0
  *
  * Andreas Giemza
  * andreas@giemza.net
@@ -177,6 +177,49 @@ ig.Vec2.prototype.rotate = function(angle) {
 
 
 /**
+ * Compares this vector with another for equality.
+ * @param {!ig.Vec2} b The other vector.
+ * @return {boolean} Whether this vector has the same x and y as the given
+ *     vector.
+ */
+ig.Vec2.prototype.equals = function(b) {
+	return this == b || !! b && this.x == b.x && this.y == b.y;
+};
+
+
+/**
+ * Set this vector to the values of another vector in-place.
+ * @param {!ig.Vec2} b The other vector.
+ * @return {!ig.Vec2} This vector set to {@code b}.
+ */
+ig.Vec2.prototype.set = function(b) {
+	this.x = b.x;
+	this.y = b.y;
+	return this;
+};
+
+
+/**
+ * Set this vector to the null vector.
+ * @return {!ig.Vec2} This vector set to the null vector.
+ */
+ig.Vec2.prototype.setNull = function() {
+	this.x = 0;
+	this.y = 0;
+	return this;
+};
+
+
+/**
+ * Check if this vector is the null vector.
+ * @return {boolean} Whether the vectors is the null vector.
+ */
+ig.Vec2.prototype.isNull = function() {
+	return this.x == 0 && this.y == 0;
+};
+
+
+/**
  * Rotates a vector by a given angle, specified in radians, relative to a given
  * axis rotation point. The returned vector is a newly created instance - no
  * in-place changes are done.
@@ -188,17 +231,6 @@ ig.Vec2.prototype.rotate = function(angle) {
 ig.Vec2.rotateAroundPoint = function(v, axisPoint, angle) {
 	var res = v.clone();
 	return res.subtract(axisPoint).rotate(angle).add(axisPoint);
-};
-
-
-/**
- * Compares this vector with another for equality.
- * @param {!ig.Vec2} b The other vector.
- * @return {boolean} Whether this vector has the same x and y as the given
- *     vector.
- */
-ig.Vec2.prototype.equals = function(b) {
-	return this == b || !! b && this.x == b.x && this.y == b.y;
 };
 
 

@@ -5,9 +5,7 @@ ig.module(
 	'impact.game',
 
 	// Plugins
-	'plugins.line-of-sight',
 	'plugins.steering-behaviors',
-	'plugins.vec2',
 
 	// Debug
 	'impact.debug.debug',

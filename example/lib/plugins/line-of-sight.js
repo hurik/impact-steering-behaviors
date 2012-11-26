@@ -2,7 +2,7 @@
  * line-of-sight
  * https://github.com/hurik/impact-line-of-sight
  *
- * v0.3.1
+ * v0.4.0
  *
  * Andreas Giemza
  * andreas@giemza.net
@@ -143,8 +143,6 @@ ig.CollisionMap.inject({
 		}
 	},
 	
-	// Return 0 when their was no collision and the distance when thei was one
-	// ATTENTION: The distance starts with 1, and not with 0! 
 	_traceLosStep: function(x0, y0, x1, y1) {
 		x0 = x0.floor();
 		y0 = y0.floor();
@@ -159,17 +157,13 @@ ig.CollisionMap.inject({
 			sy = y0 < y1 ? 1 : -1;
 		var err = (dx > dy ? dx : -dy) / 2;
 
-		var distance = 0;
-
 		while(true) {
-			distance++;
-
 			if(y0 < 0 || y0 >= this.losHeight || x0 < 0 || x0 >= this.losWidth) {
-				return distance;
+				return true;
 			}
 
 			if(this.losMap[y0][x0] != 0) {
-				return distance;
+				return true;
 			}
 
 			if(x0 === x1 && y0 === y1) {
@@ -189,7 +183,60 @@ ig.CollisionMap.inject({
 			}
 		}
 
-		return 0;
+		return false;
+	},
+
+	traceLosDetailed: function(vStart, vEnd, res) {
+		x0 = vStart.x.floor();
+		y0 = vStart.y.floor();
+
+		x1 = vEnd.x.floor();
+		y1 = vEnd.y.floor();
+
+		// Bresenham's line algorithm
+		var dx = Math.abs(x1 - x0),
+			sx = x0 < x1 ? 1 : -1;
+		var dy = Math.abs(y1 - y0),
+			sy = y0 < y1 ? 1 : -1;
+		var err = (dx > dy ? dx : -dy) / 2;
+
+		while(true) {
+			if(y0 < 0 || y0 >= this.losHeight || x0 < 0 || x0 >= this.losWidth) {
+				res.collision = true;
+				res.x = x0;
+				res.y = y0;
+
+				return;
+			}
+
+			if(this.losMap[y0][x0] != 0) {
+				res.collision = true;
+				res.x = x0;
+				res.y = y0;
+
+				return;
+			}
+
+			if(x0 === x1 && y0 === y1) {
+				break;
+			}
+
+			var e2 = err;
+
+			if(e2 > -dx) {
+				err -= dy;
+				x0 += sx;
+			}
+
+			if(e2 < dy) {
+				err += dx;
+				y0 += sy;
+			}
+		}
+
+		res.collision = false;
+		res.x = 0;
+		res.y = 0;
 	}
 });
 

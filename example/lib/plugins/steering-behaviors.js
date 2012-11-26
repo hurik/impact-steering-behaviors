@@ -24,59 +24,105 @@ ig.module(
 	'plugins.steering-behaviors'
 )
 .requires(
-	'impact.entity'
+	'impact.entity',
+	'plugins.vec2',
+	'plugins.line-of-sight'
 )
 .defines(function() {
 
 ig.Entity.inject({
-	// ----- Global settings -----
-	
-	maxForce: 10,
+	// ---- Global settings ----
+	maxForce: 500,
 	// maxSpeed is limiting the vel, maxVel is not used anymore
 	maxSpeed: 50,
 
 
-	// ----- Steering behaviors settings -----
-	
+	// ---- Steering behaviors settings ----
+	// Wall Avoidance
+	wallAvoidanceFeelerLenghtFactor: 4,
+
 	// Wander
-	wanderRadius: 16,
-	wanderDistance: 12,
+	wanderRadius: 24,
+	wanderDistance: 20,
 	wanderJitter: 200,
 
 
-	// ----- Steering behaviors weight -----
-	
+	// ---- Steering behaviors weight ----
+	wallAvoidanceWeight: 10,
 	wanderWeight: 1,
 
 
-	// ----- Steering behaviors switches -----
-	
+	// ---- Steering behaviors switches ----
+	wallAvoidanceActive: true,
 	wanderActive: true,
 
 
-	// ----- Internal -----	
-	
+	// ---- Internal ----
 	// Important variables
-	
-	// Center of the entity
 	vEntityCenter: new ig.Vec2(0, 0),
-	// Heading of the entity (normalized vel)
 	vHeading: new ig.Vec2(0, -1),
-	// Perpendicular of the heading
 	vHeadingPerp: new ig.Vec2(1, 0),
 
 	// Wander internal
-	
 	vWanderTargert: new ig.Vec2(0, 0),
 
+	// Wall Avoidance internal
+	vWaAvOuterDistance: new ig.Vec2(0, 0),
+	vWaAvFrontDistance: new ig.Vec2(0, 0),
+	vWaAvUp: new ig.Vec2(0, 0),
+	vWaAvDown: new ig.Vec2(0, 0),
+	vWaAvOuterLeftStart: new ig.Vec2(0, 0),
+	vWaAvOuterLeftEnd: new ig.Vec2(0, 0),
+	vWaAvFrontLeftStart: new ig.Vec2(0, 0),
+	vWaAvFrontLeftEnd: new ig.Vec2(0, 0),
+	vWaAvFrontRightStart: new ig.Vec2(0, 0),
+	vWaAvFrontRightEnd: new ig.Vec2(0, 0),
+	vWaAvOuterRightStart: new ig.Vec2(0, 0),
+	vWaAvOuterRightEnd: new ig.Vec2(0, 0),
 
-	// ----- Impact options -----
-	
+	oWaAvCollisionsRes: new Array(4),
+	sWaAvOvershoot: new Array(4),
+
+	wallAvoidanceBetterAvoidSide: 0,
+
+	vWaAvLeft: new ig.Vec2(0, 0),
+	vWaAvRight: new ig.Vec2(0, 0),
+
+
+	// ---- Impact options ----
 	// For better collision resolution, so no entity get stucked 
 	bounciness: 1,
 	minBounceVelocity: 0,
 
 
+	ready: function() {
+		// This must be set for the first run
+		this.vEntityCenter.x = this.pos.x + (this.size.x / 2);
+		this.vEntityCenter.y = this.pos.y + (this.size.y / 2);
+
+		// Create the collision data resource
+		this.oWaAvCollisionsRes[0] = {
+			collision: false,
+			x: 0,
+			y: 0
+		};
+		this.oWaAvCollisionsRes[1] = {
+			collision: false,
+			x: 0,
+			y: 0
+		};
+		this.oWaAvCollisionsRes[2] = {
+			collision: false,
+			x: 0,
+			y: 0
+		};
+		this.oWaAvCollisionsRes[3] = {
+			collision: false,
+			x: 0,
+			y: 0
+		};
+	},
+	
 	update: function() {
 		// Save the last position
 		this.last.x = this.pos.x;
@@ -136,16 +182,20 @@ ig.Entity.inject({
 		var vSteeringForce = new ig.Vec2(0, 0),
 			vForce = new ig.Vec2(0, 0);
 
-		if(this.wanderActive) {
-			// Get the force
-			this.wander(vForce);
+		if(this.wallAvoidanceActive) {
+			this.wallAvoidance(vForce);
+			vForce.scale(this.wallAvoidanceWeight);
 
-			// Scale it with its weight
+			if(!this.accumulateForce(vSteeringForce, vForce)) {
+				return vSteeringForce;
+			}
+		}
+
+		if(this.wanderActive) {
+			this.wander(vForce);
 			vForce.scale(this.wanderWeight);
 
-			// Add it to vSteeringForce
 			if(!this.accumulateForce(vSteeringForce, vForce)) {
-				// Nothing left ...
 				return vSteeringForce;
 			}
 		}
@@ -159,7 +209,7 @@ ig.Entity.inject({
 		// Calculate the remaining magnitude
 		var magnitudeRemaining = this.maxForce - magnitudeSoFar;
 
-		// When nothing is left return
+		// When nothing is left, return
 		if(magnitudeRemaining <= 0.000000001) {
 			return false;
 		}
@@ -187,12 +237,126 @@ ig.Entity.inject({
 		// Then normalize it and scale it to the wanderRadius
 		this.vWanderTargert.normalize().scale(this.wanderRadius);
 
-		// Set vForce to the current heading (vHeading)
-		vForce.x = this.vHeading.x;
-		vForce.y = this.vHeading.y;
+		// Set vForce to the current heading, scale it wanderDistance, add the vWanderTarget and substract the velocity
+		vForce.set(this.vHeading).scale(this.wanderDistance).add(this.vWanderTargert).subtract(this.vel);
+	},
 
-		// Scale it wanderDistance, add the vWanderTarget and substract the velocity
-		vForce.scale(this.wanderDistance).add(this.vWanderTargert).subtract(this.vel);
+	wallAvoidance: function(vForce) {
+		outerDistance = this.size.y * (this.wallAvoidanceFeelerLenghtFactor + 1);
+		frontDistance = this.size.y * this.wallAvoidanceFeelerLenghtFactor;
+
+		// Distance vectors
+		this.vWaAvOuterDistance.set(this.vHeading).scale(outerDistance);
+		this.vWaAvFrontDistance.set(this.vHeading).scale(frontDistance);
+
+		// Down vector (for the far left and far right feeler)
+		this.vWaAvDown.set(this.vHeading).scale(-this.size.y / 2);
+
+		// Up vector (for the front left and front right feeler)
+		this.vWaAvUp.set(this.vHeading).scale(this.size.y / 2);
+
+		// Outer left feeler
+		this.vWaAvOuterLeftStart.set(this.vHeadingPerp).scale(-this.size.x).add(this.vWaAvDown).add(this.vEntityCenter);
+		this.vWaAvOuterLeftEnd.set( this.vWaAvOuterLeftStart).add(this.vWaAvOuterDistance);
+
+		// Front left feeler
+		this.vWaAvFrontLeftStart.set(this.vHeadingPerp).scale(-this.size.x / 4).add(this.vWaAvUp).add(this.vEntityCenter);
+		this.vWaAvFrontLeftEnd.set(this.vWaAvFrontLeftStart).add(this.vWaAvFrontDistance);
+
+		// Front right feeler
+		this.vWaAvFrontRightStart.set(this.vHeadingPerp).scale(this.size.x / 4).add(this.vWaAvUp).add(this.vEntityCenter);
+		this.vWaAvFrontRightEnd.set(this.vWaAvFrontRightStart).add(this.vWaAvFrontDistance);
+
+		// Outer right feeler
+		this.vWaAvOuterRightStart.set(this.vHeadingPerp).scale(this.size.x).add(this.vWaAvDown).add(this.vEntityCenter);
+		this.vWaAvOuterRightEnd.set(this.vWaAvOuterRightStart).add(this.vWaAvOuterDistance);
+
+		// Check for collisions on the feelers
+		ig.game.collisionMap.traceLosDetailed(this.vWaAvOuterLeftStart, this.vWaAvOuterLeftEnd, this.oWaAvCollisionsRes[0]);
+		ig.game.collisionMap.traceLosDetailed(this.vWaAvFrontLeftStart, this.vWaAvFrontLeftEnd, this.oWaAvCollisionsRes[1]);
+		ig.game.collisionMap.traceLosDetailed(this.vWaAvFrontRightStart, this.vWaAvFrontRightEnd, this.oWaAvCollisionsRes[2]);
+		ig.game.collisionMap.traceLosDetailed(this.vWaAvOuterRightStart, this.vWaAvOuterRightEnd, this.oWaAvCollisionsRes[3]);
+
+		if(!this.oWaAvCollisionsRes[0].collision && !this.oWaAvCollisionsRes[1].collision && !this.oWaAvCollisionsRes[2].collision && !this.oWaAvCollisionsRes[3].collision) {
+			// No collision!
+			this.wallAvoidanceBetterAvoidSide = 0;
+
+			vForce.setNull();
+		} else {
+			// Collision!
+			
+			// Calculate the overshoot
+			if(this.oWaAvCollisionsRes[0].collision) {
+				this.sWaAvOvershoot[0] = outerDistance - ig.Vec2.distance(this.vWaAvOuterLeftStart, this.oWaAvCollisionsRes[0]);
+			}
+			if(this.oWaAvCollisionsRes[1].collision) {
+				this.sWaAvOvershoot[1] = this.sWaAvFrontDistance - ig.Vec2.distance(this.vWaAvFrontLeftStart, this.oWaAvCollisionsRes[1]);
+			}
+			if(this.oWaAvCollisionsRes[2].collision) {
+				this.sWaAvOvershoot[2] = this.sWaAvFrontDistance - ig.Vec2.distance(this.vWaAvFrontRightStart, this.oWaAvCollisionsRes[2]);
+			}
+			if(this.oWaAvCollisionsRes[3].collision) {
+				this.sWaAvOvershoot[3] = outerDistance - ig.Vec2.distance(this.vWaAvOuterRightStart, this.oWaAvCollisionsRes[3]);
+			}
+
+			// Get the biggest overshoot
+			var biggestOvershoot = -999999,
+				biggestOvershootFeeler;
+
+			for(var i = 0; i < 4; i++) {
+				if(this.oWaAvCollisionsRes[i].collision) {
+					if(this.sWaAvOvershoot[i] > biggestOvershoot) {
+						biggestOvershoot = this.sWaAvOvershoot[i];
+						biggestOvershootFeeler = i;
+					}
+				}
+			}
+
+			if(this.oWaAvCollisionsRes[0].collision && this.oWaAvCollisionsRes[1].collision && this.oWaAvCollisionsRes[2].collision && this.oWaAvCollisionsRes[3].collision) {
+				// Collision on all feelers!
+				if (this.wallAvoidanceBetterAvoidSide == 0) {
+					// 1 = left, 2= right
+					this.vWaAvLeft.set(this.vHeadingPerp).scale(-this.size.x * this.wallAvoidanceFeelerLenghtFactor).add(this.vEntityCenter);
+					this.vWaAvRight.set(this.vHeadingPerp).scale(this.size.x * this.wallAvoidanceFeelerLenghtFactor).add(this.vEntityCenter);
+
+					ig.game.collisionMap.traceLosDetailed(this.vEntityCenter, this.vWaAvLeft, this.oWaAvCollisionsRes[1]);
+					ig.game.collisionMap.traceLosDetailed(this.vEntityCenter, this.vWaAvRight, this.oWaAvCollisionsRes[2]);
+
+					if (!this.oWaAvCollisionsRes[1].collision && this.oWaAvCollisionsRes[2].collision) {
+						// Left side free
+						this.wallAvoidanceBetterAvoidSide = 1;
+					} else if(this.oWaAvCollisionsRes[1].collision && !this.oWaAvCollisionsRes[2].collision) {
+						// Right side free
+						this.wallAvoidanceBetterAvoidSide = 2;
+					} else {
+						// Both side free
+						if (biggestOvershootFeeler == 0 || biggestOvershootFeeler == 1) {
+							this.wallAvoidanceBetterAvoidSide = 2;
+						} else {
+							this.wallAvoidanceBetterAvoidSide = 1;
+						}
+					}
+				}
+
+				vForce.set(this.vHeadingPerp);
+				
+				if(this.wallAvoidanceBetterAvoidSide == 1) {
+					vForce.scale(-biggestOvershoot);
+				} else {
+					vForce.scale(biggestOvershoot);
+				}
+			} else {
+				this.wallAvoidanceBetterAvoidSide = 0;
+
+				vForce.set(this.vHeadingPerp);
+
+				if(biggestOvershootFeeler == 0 || biggestOvershootFeeler == 1) {
+					vForce.scale(biggestOvershoot);
+				} else {
+					vForce.scale(-biggestOvershoot);
+				}
+			}
+		}
 	}
 });
 

@@ -41,11 +41,18 @@ ig.Entity.inject({
 			this._drawCircle(vCircleCenter, this.wanderRadius, 1, 255, 0, 0, 0.5);
 			this._drawCircle(vMovementPointer, 1, 2, 255, 0, 0, 0.5);
 		}
+
+		if(ig.Entity._wallAvoidance && this.wallAvoidanceActive) {
+			this._drawLine(this.vWaAvOuterLeftStart, this.vWaAvOuterLeftEnd, 1, 255, 0, 0, 0.5);
+			this._drawLine(this.vWaAvFrontLeftStart, this.vWaAvFrontLeftEnd, 1, 255, 0, 0, 0.5);
+			this._drawLine(this.vWaAvFrontRightStart, this.vWaAvFrontRightEnd, 1, 255, 0, 0, 0.5);
+			this._drawLine(this.vWaAvOuterRightStart, this.vWaAvOuterRightEnd, 1, 255, 0, 0, 0.5);
+		}
 	},
 
 	_drawCircle: function(vect, radius, width, r, g, b, a) {
 		ig.system.context.strokeStyle = 'rgba(' + r + ', ' + g + ', ' + b + ', ' + a + ')';
-		ig.system.context.lineWidth = width;
+		ig.system.context.lineWidth = width * ig.system.scale;
 
 		ig.system.context.beginPath();
 		ig.system.context.arc(ig.system.getDrawPos(vect.x - ig.game.screen.x), ig.system.getDrawPos(vect.y - ig.game.screen.y), radius * ig.system.scale, 0, Math.PI * 2);
@@ -54,7 +61,7 @@ ig.Entity.inject({
 
 	_drawLine: function(vect1, vect2, width, r, g, b, a) {
 		ig.system.context.strokeStyle = 'rgba(' + r + ', ' + g + ', ' + b + ', ' + a + ')';
-		ig.system.context.lineWidth = width;
+		ig.system.context.lineWidth = width * ig.system.scale;
 
 		ig.system.context.beginPath();
 		ig.system.context.moveTo(
@@ -67,6 +74,7 @@ ig.Entity.inject({
 });
 
 ig.Entity._wander = false;
+ig.Entity._wallAvoidance = false;
 
 ig.debug.addPanel({
 	type: ig.DebugPanel,
@@ -77,6 +85,10 @@ ig.debug.addPanel({
 		name: 'Wander',
 		object: ig.Entity,
 		property: '_wander'
+	}, {
+		name: 'Wall Avoidance',
+		object: ig.Entity,
+		property: '_wallAvoidance'
 	}]
 });
 
