@@ -32,7 +32,7 @@ ig.module(
 
 ig.Entity.inject({
 	// ---- Global settings ----
-	maxForce: 500,
+	maxForce: 100,
 	// maxSpeed is limiting the vel, maxVel is not used anymore
 	maxSpeed: 50,
 
@@ -42,10 +42,13 @@ ig.Entity.inject({
 	wallAvoidanceFeelerLenghtFactor: 4,
 
 	// Wander
-	wanderRadius: 24,
-	wanderDistance: 20,
+	wanderRadius: 16,
+	wanderDistance: 12,
 	wanderJitter: 200,
 
+	// Get Neighbors
+	getNeighborsDistance: 40,
+	getNeighborsEntityType: '',
 
 	// ---- Steering behaviors weight ----
 	wallAvoidanceWeight: 10,
@@ -83,11 +86,18 @@ ig.Entity.inject({
 	oWaAvCollisionsRes: new Array(4),
 	sWaAvOvershoot: new Array(4),
 
-	wallAvoidanceBetterAvoidSide: 0,
+	sWaAvBetterAvoidSide: 0,
 
 	vWaAvLeft: new ig.Vec2(0, 0),
 	vWaAvRight: new ig.Vec2(0, 0),
 
+	// Get Neighbors internal
+	lGeNeList: [],
+	lGeNeAllEntitiesOfTypeList: [],
+	oGeNeRes: null,
+	sGeNeOldEntitiesCount: 0,
+	sGeNeOldDistance: 0,
+	sGeNeSquaredDistance: 0,
 
 	// ---- Impact options ----
 	// For better collision resolution, so no entity get stucked 
@@ -101,28 +111,21 @@ ig.Entity.inject({
 		this.vEntityCenter.y = this.pos.y + (this.size.y / 2);
 
 		// Create the collision data resource
-		this.oWaAvCollisionsRes[0] = {
-			collision: false,
-			x: 0,
-			y: 0
-		};
-		this.oWaAvCollisionsRes[1] = {
-			collision: false,
-			x: 0,
-			y: 0
-		};
-		this.oWaAvCollisionsRes[2] = {
-			collision: false,
-			x: 0,
-			y: 0
-		};
-		this.oWaAvCollisionsRes[3] = {
+		for(var i = 0; i < 4; i++) {
+			this.oWaAvCollisionsRes[i] = {
+				collision: false,
+				x: 0,
+				y: 0
+			};
+		}
+
+		this.oGeNeRes = {
 			collision: false,
 			x: 0,
 			y: 0
 		};
 	},
-	
+
 	update: function() {
 		// Save the last position
 		this.last.x = this.pos.x;
@@ -150,6 +153,10 @@ ig.Entity.inject({
 		var res = ig.game.collisionMap.trace(
 		this.pos.x, this.pos.y, mx, my, this.size.x, this.size.y);
 		this.handleMovementTrace(res);
+
+		if(res.collision.x || res.collision.y) {
+			ig.log('collision!');
+		}
 
 		// Update vEntityCenter
 		this.vEntityCenter.x = this.pos.x + (this.size.x / 2);
@@ -199,6 +206,8 @@ ig.Entity.inject({
 				return vSteeringForce;
 			}
 		}
+
+		this.getNeighbors();
 
 		return vSteeringForce;
 	},
@@ -257,7 +266,7 @@ ig.Entity.inject({
 
 		// Outer left feeler
 		this.vWaAvOuterLeftStart.set(this.vHeadingPerp).scale(-this.size.x).add(this.vWaAvDown).add(this.vEntityCenter);
-		this.vWaAvOuterLeftEnd.set( this.vWaAvOuterLeftStart).add(this.vWaAvOuterDistance);
+		this.vWaAvOuterLeftEnd.set(this.vWaAvOuterLeftStart).add(this.vWaAvOuterDistance);
 
 		// Front left feeler
 		this.vWaAvFrontLeftStart.set(this.vHeadingPerp).scale(-this.size.x / 4).add(this.vWaAvUp).add(this.vEntityCenter);
@@ -279,12 +288,11 @@ ig.Entity.inject({
 
 		if(!this.oWaAvCollisionsRes[0].collision && !this.oWaAvCollisionsRes[1].collision && !this.oWaAvCollisionsRes[2].collision && !this.oWaAvCollisionsRes[3].collision) {
 			// No collision!
-			this.wallAvoidanceBetterAvoidSide = 0;
+			this.sWaAvBetterAvoidSide = 0;
 
 			vForce.setNull();
 		} else {
 			// Collision!
-			
 			// Calculate the overshoot
 			if(this.oWaAvCollisionsRes[0].collision) {
 				this.sWaAvOvershoot[0] = outerDistance - ig.Vec2.distance(this.vWaAvOuterLeftStart, this.oWaAvCollisionsRes[0]);
@@ -314,7 +322,7 @@ ig.Entity.inject({
 
 			if(this.oWaAvCollisionsRes[0].collision && this.oWaAvCollisionsRes[1].collision && this.oWaAvCollisionsRes[2].collision && this.oWaAvCollisionsRes[3].collision) {
 				// Collision on all feelers!
-				if (this.wallAvoidanceBetterAvoidSide == 0) {
+				if(this.sWaAvBetterAvoidSide == 0) {
 					// 1 = left, 2= right
 					this.vWaAvLeft.set(this.vHeadingPerp).scale(-this.size.x * this.wallAvoidanceFeelerLenghtFactor).add(this.vEntityCenter);
 					this.vWaAvRight.set(this.vHeadingPerp).scale(this.size.x * this.wallAvoidanceFeelerLenghtFactor).add(this.vEntityCenter);
@@ -322,31 +330,31 @@ ig.Entity.inject({
 					ig.game.collisionMap.traceLosDetailed(this.vEntityCenter, this.vWaAvLeft, this.oWaAvCollisionsRes[1]);
 					ig.game.collisionMap.traceLosDetailed(this.vEntityCenter, this.vWaAvRight, this.oWaAvCollisionsRes[2]);
 
-					if (!this.oWaAvCollisionsRes[1].collision && this.oWaAvCollisionsRes[2].collision) {
+					if(!this.oWaAvCollisionsRes[1].collision && this.oWaAvCollisionsRes[2].collision) {
 						// Left side free
-						this.wallAvoidanceBetterAvoidSide = 1;
+						this.sWaAvBetterAvoidSide = 1;
 					} else if(this.oWaAvCollisionsRes[1].collision && !this.oWaAvCollisionsRes[2].collision) {
 						// Right side free
-						this.wallAvoidanceBetterAvoidSide = 2;
+						this.sWaAvBetterAvoidSide = 2;
 					} else {
 						// Both side free
-						if (biggestOvershootFeeler == 0 || biggestOvershootFeeler == 1) {
-							this.wallAvoidanceBetterAvoidSide = 2;
+						if(biggestOvershootFeeler == 0 || biggestOvershootFeeler == 1) {
+							this.sWaAvBetterAvoidSide = 2;
 						} else {
-							this.wallAvoidanceBetterAvoidSide = 1;
+							this.sWaAvBetterAvoidSide = 1;
 						}
 					}
 				}
 
 				vForce.set(this.vHeadingPerp);
-				
-				if(this.wallAvoidanceBetterAvoidSide == 1) {
+
+				if(this.sWaAvBetterAvoidSide == 1) {
 					vForce.scale(-biggestOvershoot);
 				} else {
 					vForce.scale(biggestOvershoot);
 				}
 			} else {
-				this.wallAvoidanceBetterAvoidSide = 0;
+				this.sWaAvBetterAvoidSide = 0;
 
 				vForce.set(this.vHeadingPerp);
 
@@ -355,6 +363,46 @@ ig.Entity.inject({
 				} else {
 					vForce.scale(-biggestOvershoot);
 				}
+			}
+		}
+	},
+
+	// TODO: Awfully slow ...
+	getNeighbors: function() {
+		// Check if there a new entites or some where killed
+		if(ig.game.entities.lenght != this.sGeNeOldEntitiesCount) {
+			// Get every entity with this type
+			this.lGeNeAllEntitiesOfTypeList = ig.game.getEntitiesByType(this.getNeighborsEntityType);
+
+			this.sGeNeOldEntitiesCount = ig.game.entities.lenght;
+		}
+
+		// Check if the distance was changed
+		if(this.getNeighborsDistance != this.sGeNeOldDistance) {
+			this.sGeNeSquaredDistance = this.getNeighborsDistance * this.getNeighborsDistance;
+
+			this.sGeNeOldDistance = this.getNeighborsDistance;
+		}
+
+		// Clear the neighbors list
+		this.lGeNeList = [];
+
+		// Go through the entities
+		for(var i = 0; i < this.lGeNeAllEntitiesOfTypeList.length; i++) {
+			// Check if the entity is not this entity
+			if(this.lGeNeAllEntitiesOfTypeList[i] != this) {
+				// Check if this entity is in distance
+				// For speedup we use the distance square function
+				if(ig.Vec2.squaredDistance(this.vEntityCenter, this.lGeNeAllEntitiesOfTypeList[i].vEntityCenter) < this.sGeNeSquaredDistance) {
+					// Now we check if the entity have a line of sight
+					ig.game.collisionMap.traceLosDetailed(this.vEntityCenter, this.lGeNeAllEntitiesOfTypeList[i].vEntityCenter, this.oGeNeRes);
+
+					if(!this.oGeNeRes.collision) {
+						// Put this entity on the neighbors list
+						this.lGeNeList.push(this.lGeNeAllEntitiesOfTypeList[i]);
+					}
+				}
+
 			}
 		}
 	}

@@ -14,6 +14,8 @@ EntitySheep = ig.Entity.extend({
 
 	animSheet: new ig.AnimationSheet('media/sheep.png', 8, 8),
 
+	getNeighborsEntityType: 'EntitySheep',
+
 	init: function(x, y, settings) {
 		this.addAnim('idle', 5, [0]);
 
