@@ -55,7 +55,7 @@ ig.Entity.inject({
 	wallAvoidanceWeight: 10,
 	separationWeight: 50,
 	alignmentWeight: 20,
-	cohesionWeight: 1,
+	cohesionWeight: 1.25,
 	wanderWeight: 2,
 
 
@@ -72,6 +72,8 @@ ig.Entity.inject({
 	vEntityCenter: new ig.Vec2(0, 0),
 	vHeading: new ig.Vec2(0, -1),
 	vHeadingPerp: new ig.Vec2(1, 0),
+	vSteeringForce: new ig.Vec2(0, 0),
+	vForce: new ig.Vec2(0, 0),
 
 	// Wander internal
 	vWanderTargert: new ig.Vec2(0, 0),
@@ -142,11 +144,11 @@ ig.Entity.inject({
 		this.last.y = this.pos.y;
 
 		// Get the steering force		
-		var acceleration = this.calculateSterringForce();
+		this.calculateSterringForce();
 
 		// Update the velocity
-		this.vel.x += acceleration.x * ig.system.tick;
-		this.vel.y += acceleration.y * ig.system.tick;
+		this.vel.x += this.vSteeringForce.x * ig.system.tick;
+		this.vel.y += this.vSteeringForce.y * ig.system.tick;
 
 		// Get the current speed
 		var speed = Math.sqrt(this.vel.x * this.vel.x + this.vel.y * this.vel.y);
@@ -196,15 +198,14 @@ ig.Entity.inject({
 	},
 
 	calculateSterringForce: function() {
-		var vSteeringForce = new ig.Vec2(0, 0),
-			vForce = new ig.Vec2(0, 0);
+		this.vSteeringForce.setNull();
 
 		if(this.wallAvoidanceActive) {
-			this.wallAvoidance(vForce);
-			vForce.scale(this.wallAvoidanceWeight);
+			this.wallAvoidance();
+			this.vForce.scale(this.wallAvoidanceWeight);
 
-			if(!this.accumulateForce(vSteeringForce, vForce)) {
-				return vSteeringForce;
+			if(!this.accumulateForce()) {
+				return;
 			}
 		}
 
@@ -212,49 +213,47 @@ ig.Entity.inject({
 			this.getNeighbors();
 
 			if(this.separationActive) {
-				this.seperation(vForce);
-				vForce.scale(this.separationWeight);
+				this.seperation();
+				this.vForce.scale(this.separationWeight);
 
-				if(!this.accumulateForce(vSteeringForce, vForce)) {
-					return vSteeringForce;
+				if(!this.accumulateForce()) {
+					return;
 				}
 			}
 
 			if(this.alignmentActive) {
-				this.alignment(vForce);
-				vForce.scale(this.alignmentWeight);
+				this.alignment();
+				this.vForce.scale(this.alignmentWeight);
 
-				if(!this.accumulateForce(vSteeringForce, vForce)) {
-					return vSteeringForce;
+				if(!this.accumulateForce()) {
+					return;
 				}
 			}
 
 			if(this.cohesionActive) {
-				this.cohesion(vForce);
-				vForce.scale(this.cohesionWeight);
+				this.cohesion();
+				this.vForce.scale(this.cohesionWeight);
 
-				if(!this.accumulateForce(vSteeringForce, vForce)) {
-					return vSteeringForce;
+				if(!this.accumulateForce()) {
+					return;
 				}
 			}
 		}
 
 		if(this.wanderActive) {
-			this.wander(vForce);
-			vForce.scale(this.wanderWeight);
+			this.wander();
+			this.vForce.scale(this.wanderWeight);
 
-			if(!this.accumulateForce(vSteeringForce, vForce)) {
-				return vSteeringForce;
+			if(!this.accumulateForce()) {
+				return;
 			}
 		}
-
-		return vSteeringForce;
 	},
 
 
-	accumulateForce: function(vSteeringForce, vForceToAdd) {
+	accumulateForce: function() {
 		// Get the current magnitude of thevSteeringForce
-		var magnitudeSoFar = vSteeringForce.magnitude();
+		var magnitudeSoFar = this.vSteeringForce.magnitude();
 		// Calculate the remaining magnitude
 		var magnitudeRemaining = this.maxForce - magnitudeSoFar;
 
@@ -264,21 +263,21 @@ ig.Entity.inject({
 		}
 
 		// Get the magnitude of the vForceToAdd
-		var magnitudeToAdd = vForceToAdd.magnitude();
+		var magnitudeToAdd = this.vForce.magnitude();
 
 		// Check if the magnitudeToAdd is smaller magnitudeRemaining
 		if(magnitudeToAdd < magnitudeRemaining) {
 			// It was smaller, only need to add vForceToAdd to vSteeringForce
-			vSteeringForce.add(vForceToAdd);
+			this.vSteeringForce.add(this.vForce);
 		} else {
 			// It was bigger, so we normalize vForceToAdd and scale it with the magnitudeRemaining
-			vSteeringForce.add(vForceToAdd.normalize().scale(magnitudeRemaining));
+			this.vSteeringForce.add(this.vForce.normalize().scale(magnitudeRemaining));
 		}
 
 		return true;
 	},
 
-	wander: function(vForce) {
+	wander: function() {
 		// Add a random vector to the vWanderTarget
 		this.vWanderTargert.x += (Math.random() * 2 - 1) * this.wanderJitter * ig.system.tick;
 		this.vWanderTargert.y += (Math.random() * 2 - 1) * this.wanderJitter * ig.system.tick;
@@ -287,10 +286,10 @@ ig.Entity.inject({
 		this.vWanderTargert.normalize().scale(this.wanderRadius);
 
 		// Set vForce to the current heading, scale it wanderDistance, add the vWanderTarget and substract the velocity
-		vForce.set(this.vHeading).scale(this.wanderDistance).add(this.vWanderTargert).subtract(this.vel);
+		this.vForce.set(this.vHeading).scale(this.wanderDistance).add(this.vWanderTargert).subtract(this.vel);
 	},
 
-	wallAvoidance: function(vForce) {
+	wallAvoidance: function() {
 		outerDistance = this.size.y * (this.wallAvoidanceFeelerLenghtFactor + 1);
 		frontDistance = this.size.y * this.wallAvoidanceFeelerLenghtFactor;
 
@@ -330,7 +329,7 @@ ig.Entity.inject({
 			// No collision!
 			this.sWaAvBetterAvoidSide = 0;
 
-			vForce.setNull();
+			this.vForce.setNull();
 		} else {
 			// Collision!
 			// Calculate the overshoot
@@ -386,22 +385,22 @@ ig.Entity.inject({
 					}
 				}
 
-				vForce.set(this.vHeadingPerp);
+				this.vForce.set(this.vHeadingPerp);
 
 				if(this.sWaAvBetterAvoidSide == 1) {
-					vForce.scale(-biggestOvershoot);
+					this.vForce.scale(-biggestOvershoot);
 				} else {
-					vForce.scale(biggestOvershoot);
+					this.vForce.scale(biggestOvershoot);
 				}
 			} else {
 				this.sWaAvBetterAvoidSide = 0;
 
-				vForce.set(this.vHeadingPerp);
+				this.vForce.set(this.vHeadingPerp);
 
 				if(biggestOvershootFeeler == 0 || biggestOvershootFeeler == 1) {
-					vForce.scale(biggestOvershoot);
+					this.vForce.scale(biggestOvershoot);
 				} else {
-					vForce.scale(-biggestOvershoot);
+					this.vForce.scale(-biggestOvershoot);
 				}
 			}
 		}
@@ -447,8 +446,8 @@ ig.Entity.inject({
 		}
 	},
 
-	seperation: function(vForce) {
-		vForce.setNull();
+	seperation: function() {
+		this.vForce.setNull();
 
 		// Go through the neighbors
 		for(var i = 0; i < this.lGeNeList.length; i++) {
@@ -461,37 +460,37 @@ ig.Entity.inject({
 
 				this.vSeVectorToNeighbor.normalize().scale(1 / magnitude)
 
-				vForce.add(this.vSeVectorToNeighbor);
+				this.vForce.add(this.vSeVectorToNeighbor);
 			}
 		}
 	},
 
-	alignment: function(vForce) {
-		vForce.setNull();
+	alignment: function() {
+		this.vForce.setNull();
 
 		// Go through the neighbors
 		for(var i = 0; i < this.lGeNeList.length; i++) {
-			vForce.add(this.lGeNeList[i].vHeading);
+			this.vForce.add(this.lGeNeList[i].vHeading);
 		}
 
 		if(this.lGeNeList.length > 0) {
-			vForce.scale(1 / this.lGeNeList.length).subtract(this.vHeading);
+			this.vForce.scale(1 / this.lGeNeList.length).subtract(this.vHeading);
 		}
 	},
 
-	cohesion: function(vForce) {
-		vForce.setNull();
+	cohesion: function() {
+		this.vForce.setNull();
 
 		// Go through the neighbors
 		for(var i = 0; i < this.lGeNeList.length; i++) {
-			vForce.add(this.lGeNeList[i].pos);
+			this.vForce.add(this.lGeNeList[i].pos);
 		}
 
 		if(this.lGeNeList.length > 0) {
-			vForce.scale(1 / this.lGeNeList.length);
+			this.vForce.scale(1 / this.lGeNeList.length);
 
 			// TODO: Replace with seek
-			vForce.subtract(this.pos).normalize().scale(this.maxSpeed).subtract(this.vel);
+			this.vForce.subtract(this.pos).normalize().scale(this.maxSpeed).subtract(this.vel);
 		}
 	}
 });
