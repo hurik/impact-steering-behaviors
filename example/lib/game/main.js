@@ -11,9 +11,6 @@ ig.module(
 	'impact.debug.debug',
 	'plugins.steering-behaviors-debug',
 
-	// Entities
-	'game.entities.sheep',
-
 	// Maps
 	'game.levels.example'
 )

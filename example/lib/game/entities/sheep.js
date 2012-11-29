@@ -16,6 +16,12 @@ EntitySheep = ig.Entity.extend({
 
 	getNeighborsEntityType: 'EntitySheep',
 
+	wallAvoidanceActive: true,
+	separationActive: true,
+	alignmentActive: true,
+	cohesionActive: true,
+	wanderActive: true,
+
 	init: function(x, y, settings) {
 		this.addAnim('idle', 5, [0]);
 

@@ -32,7 +32,7 @@ ig.module(
 
 ig.Entity.inject({
 	// ---- Global settings ----
-	maxForce: 100,
+	maxForce: 500,
 	// maxSpeed is limiting the vel, maxVel is not used anymore
 	maxSpeed: 50,
 
@@ -42,22 +42,29 @@ ig.Entity.inject({
 	wallAvoidanceFeelerLenghtFactor: 4,
 
 	// Wander
-	wanderRadius: 16,
-	wanderDistance: 12,
+	wanderRadius: 20,
+	wanderDistance: 40,
 	wanderJitter: 200,
 
 	// Get Neighbors
 	getNeighborsDistance: 40,
 	getNeighborsEntityType: '',
 
+
 	// ---- Steering behaviors weight ----
 	wallAvoidanceWeight: 10,
-	wanderWeight: 1,
+	separationWeight: 50,
+	alignmentWeight: 20,
+	cohesionWeight: 1,
+	wanderWeight: 2,
 
 
 	// ---- Steering behaviors switches ----
-	wallAvoidanceActive: true,
-	wanderActive: true,
+	wallAvoidanceActive: false,
+	separationActive: false,
+	alignmentActive: false,
+	cohesionActive: false,
+	wanderActive: false,
 
 
 	// ---- Internal ----
@@ -99,11 +106,14 @@ ig.Entity.inject({
 	sGeNeOldDistance: 0,
 	sGeNeSquaredDistance: 0,
 
+	// Seperation internal
+	vSeVectorToNeighbor: new ig.Vec2(0, 0),
+
+
 	// ---- Impact options ----
 	// For better collision resolution, so no entity get stucked 
 	bounciness: 1,
 	minBounceVelocity: 0,
-
 
 	ready: function() {
 		// This must be set for the first run
@@ -198,6 +208,37 @@ ig.Entity.inject({
 			}
 		}
 
+		if(this.separationActive || this.alignmentActive || this.cohesionActive) {
+			this.getNeighbors();
+
+			if(this.separationActive) {
+				this.seperation(vForce);
+				vForce.scale(this.separationWeight);
+
+				if(!this.accumulateForce(vSteeringForce, vForce)) {
+					return vSteeringForce;
+				}
+			}
+
+			if(this.alignmentActive) {
+				this.alignment(vForce);
+				vForce.scale(this.alignmentWeight);
+
+				if(!this.accumulateForce(vSteeringForce, vForce)) {
+					return vSteeringForce;
+				}
+			}
+
+			if(this.cohesionActive) {
+				this.cohesion(vForce);
+				vForce.scale(this.cohesionWeight);
+
+				if(!this.accumulateForce(vSteeringForce, vForce)) {
+					return vSteeringForce;
+				}
+			}
+		}
+
 		if(this.wanderActive) {
 			this.wander(vForce);
 			vForce.scale(this.wanderWeight);
@@ -207,10 +248,9 @@ ig.Entity.inject({
 			}
 		}
 
-		this.getNeighbors();
-
 		return vSteeringForce;
 	},
+
 
 	accumulateForce: function(vSteeringForce, vForceToAdd) {
 		// Get the current magnitude of thevSteeringForce
@@ -404,6 +444,54 @@ ig.Entity.inject({
 				}
 
 			}
+		}
+	},
+
+	seperation: function(vForce) {
+		vForce.setNull();
+
+		// Go through the neighbors
+		for(var i = 0; i < this.lGeNeList.length; i++) {
+			// Check if the this has not the same pos like the other or we get an ugly devision through zero
+			// This normaly only happens when the two entities are placed on the same position in weltmeister
+			if(!ig.Vec2.equals(this.lGeNeList[i].pos, this.pos)) {
+				this.vSeVectorToNeighbor.set(this.pos).subtract(this.lGeNeList[i].pos);
+
+				var magnitude = this.vSeVectorToNeighbor.magnitude();
+
+				this.vSeVectorToNeighbor.normalize().scale(1 / magnitude)
+
+				vForce.add(this.vSeVectorToNeighbor);
+			}
+		}
+	},
+
+	alignment: function(vForce) {
+		vForce.setNull();
+
+		// Go through the neighbors
+		for(var i = 0; i < this.lGeNeList.length; i++) {
+			vForce.add(this.lGeNeList[i].vHeading);
+		}
+
+		if(this.lGeNeList.length > 0) {
+			vForce.scale(1 / this.lGeNeList.length).subtract(this.vHeading);
+		}
+	},
+
+	cohesion: function(vForce) {
+		vForce.setNull();
+
+		// Go through the neighbors
+		for(var i = 0; i < this.lGeNeList.length; i++) {
+			vForce.add(this.lGeNeList[i].pos);
+		}
+
+		if(this.lGeNeList.length > 0) {
+			vForce.scale(1 / this.lGeNeList.length);
+
+			// TODO: Replace with seek
+			vForce.subtract(this.pos).normalize().scale(this.maxSpeed).subtract(this.vel);
 		}
 	}
 });
