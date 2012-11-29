@@ -2,7 +2,7 @@
  * line-of-sight
  * https://github.com/hurik/impact-line-of-sight
  *
- * v0.4.0
+ * v0.4.1
  *
  * Andreas Giemza
  * andreas@giemza.net
@@ -187,11 +187,11 @@ ig.CollisionMap.inject({
 	},
 
 	traceLosDetailed: function(vStart, vEnd, res) {
-		x0 = vStart.x.floor();
-		y0 = vStart.y.floor();
+		var x0 = vStart.x.floor(),
+			y0 = vStart.y.floor();
 
-		x1 = vEnd.x.floor();
-		y1 = vEnd.y.floor();
+		var x1 = vEnd.x.floor(),
+			y1 = vEnd.y.floor();
 
 		// Bresenham's line algorithm
 		var dx = Math.abs(x1 - x0),

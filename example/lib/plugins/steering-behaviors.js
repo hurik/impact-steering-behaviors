@@ -36,10 +36,12 @@ ig.Entity.inject({
 	// maxSpeed is limiting the vel, maxVel is not used anymore
 	maxSpeed: 50,
 
-
 	// ---- Steering behaviors settings ----
 	// Wall Avoidance
 	wallAvoidanceFeelerLenghtFactor: 4,
+
+	// Flee
+	vFleeFrom: new ig.Vec2(50, 50),
 
 	// Wander
 	wanderRadius: 20,
@@ -52,8 +54,9 @@ ig.Entity.inject({
 
 
 	// ---- Steering behaviors weight ----
-	wallAvoidanceWeight: 10,
-	separationWeight: 50,
+	wallAvoidanceWeight: 20,
+	fleeWeight: 5,
+	separationWeight: 60,
 	alignmentWeight: 20,
 	cohesionWeight: 1.25,
 	wanderWeight: 2,
@@ -61,6 +64,7 @@ ig.Entity.inject({
 
 	// ---- Steering behaviors switches ----
 	wallAvoidanceActive: false,
+	fleeActive: false,
 	separationActive: false,
 	alignmentActive: false,
 	cohesionActive: false,
@@ -75,10 +79,10 @@ ig.Entity.inject({
 	vSteeringForce: new ig.Vec2(0, 0),
 	vForce: new ig.Vec2(0, 0),
 
-	// Wander internal
+	// Wander
 	vWanderTargert: new ig.Vec2(0, 0),
 
-	// Wall Avoidance internal
+	// Wall Avoidance
 	vWaAvOuterDistance: new ig.Vec2(0, 0),
 	vWaAvFrontDistance: new ig.Vec2(0, 0),
 	vWaAvUp: new ig.Vec2(0, 0),
@@ -100,7 +104,7 @@ ig.Entity.inject({
 	vWaAvLeft: new ig.Vec2(0, 0),
 	vWaAvRight: new ig.Vec2(0, 0),
 
-	// Get Neighbors internal
+	// Get Neighbors
 	lGeNeList: [],
 	lGeNeAllEntitiesOfTypeList: [],
 	oGeNeRes: null,
@@ -108,8 +112,11 @@ ig.Entity.inject({
 	sGeNeOldDistance: 0,
 	sGeNeSquaredDistance: 0,
 
-	// Seperation internal
+	// Seperation
 	vSeVectorToNeighbor: new ig.Vec2(0, 0),
+
+	// Cohesion
+	vCoCenterOfMass: new ig.Vec2(0, 0),
 
 
 	// ---- Impact options ----
@@ -209,43 +216,52 @@ ig.Entity.inject({
 			}
 		}
 
-		if(this.separationActive || this.alignmentActive || this.cohesionActive) {
-			this.getNeighbors();
-
-			if(this.separationActive) {
-				this.seperation();
-				this.vForce.scale(this.separationWeight);
-
-				if(!this.accumulateForce()) {
-					return;
-				}
-			}
-
-			if(this.alignmentActive) {
-				this.alignment();
-				this.vForce.scale(this.alignmentWeight);
-
-				if(!this.accumulateForce()) {
-					return;
-				}
-			}
-
-			if(this.cohesionActive) {
-				this.cohesion();
-				this.vForce.scale(this.cohesionWeight);
-
-				if(!this.accumulateForce()) {
-					return;
-				}
-			}
-		}
-
-		if(this.wanderActive) {
-			this.wander();
-			this.vForce.scale(this.wanderWeight);
+		if(this.fleeActive) {
+			this.flee(this.vFleeFrom);
+			this.vForce.scale(this.fleeWeight);
 
 			if(!this.accumulateForce()) {
 				return;
+			}
+		} else {
+			if(this.separationActive || this.alignmentActive || this.cohesionActive) {
+				this.getNeighbors();
+
+				if(this.separationActive) {
+					this.seperation();
+					this.vForce.scale(this.separationWeight);
+
+					if(!this.accumulateForce()) {
+						return;
+					}
+				}
+
+				if(this.alignmentActive) {
+					this.alignment();
+					this.vForce.scale(this.alignmentWeight);
+
+					if(!this.accumulateForce()) {
+						return;
+					}
+				}
+
+				if(this.cohesionActive) {
+					this.cohesion();
+					this.vForce.scale(this.cohesionWeight);
+
+					if(!this.accumulateForce()) {
+						return;
+					}
+				}
+			}
+
+			if(this.wanderActive) {
+				this.wander();
+				this.vForce.scale(this.wanderWeight);
+
+				if(!this.accumulateForce()) {
+					return;
+				}
 			}
 		}
 	},
@@ -285,7 +301,7 @@ ig.Entity.inject({
 		// Then normalize it and scale it to the wanderRadius
 		this.vWanderTargert.normalize().scale(this.wanderRadius);
 
-		// Set vForce to the current heading, scale it wanderDistance, add the vWanderTarget and substract the velocity
+		// Set vForce to the current heading, scale it wanderDistance, add the vWanderTarget and subtract the velocity
 		this.vForce.set(this.vHeading).scale(this.wanderDistance).add(this.vWanderTargert).subtract(this.vel);
 	},
 
@@ -408,7 +424,9 @@ ig.Entity.inject({
 
 	// TODO: Awfully slow ...
 	getNeighbors: function() {
-		// Check if there a new entites or some where killed
+		// Check if there a new entites or an entity was killed
+		// TODO: Must be improved because when an entity shoots for example and spawns bullets,
+		//       this here get realy often processed ...
 		if(ig.game.entities.lenght != this.sGeNeOldEntitiesCount) {
 			// Get every entity with this type
 			this.lGeNeAllEntitiesOfTypeList = ig.game.getEntitiesByType(this.getNeighborsEntityType);
@@ -451,10 +469,10 @@ ig.Entity.inject({
 
 		// Go through the neighbors
 		for(var i = 0; i < this.lGeNeList.length; i++) {
-			// Check if the this has not the same pos like the other or we get an ugly devision through zero
+			// Check if the this has not the same vEntityCenter like the other or we get an ugly devision through zero
 			// This normaly only happens when the two entities are placed on the same position in weltmeister
-			if(!ig.Vec2.equals(this.lGeNeList[i].pos, this.pos)) {
-				this.vSeVectorToNeighbor.set(this.pos).subtract(this.lGeNeList[i].pos);
+			if(!ig.Vec2.equals(this.lGeNeList[i].vEntityCenter, this.vEntityCenter)) {
+				this.vSeVectorToNeighbor.set(this.vEntityCenter).subtract(this.lGeNeList[i].vEntityCenter);
 
 				var magnitude = this.vSeVectorToNeighbor.magnitude();
 
@@ -479,19 +497,26 @@ ig.Entity.inject({
 	},
 
 	cohesion: function() {
-		this.vForce.setNull();
+		this.vCoCenterOfMass.setNull();
 
 		// Go through the neighbors
 		for(var i = 0; i < this.lGeNeList.length; i++) {
-			this.vForce.add(this.lGeNeList[i].pos);
+			this.vCoCenterOfMass.add(this.lGeNeList[i].vEntityCenter);
 		}
 
 		if(this.lGeNeList.length > 0) {
-			this.vForce.scale(1 / this.lGeNeList.length);
+			this.vCoCenterOfMass.scale(1 / this.lGeNeList.length);
 
-			// TODO: Replace with seek
-			this.vForce.subtract(this.pos).normalize().scale(this.maxSpeed).subtract(this.vel);
+			this.seek(this.vCoCenterOfMass);
 		}
+	},
+
+	seek: function(targetPos) {
+		this.vForce.set(targetPos).subtract(this.vEntityCenter).normalize().scale(this.maxSpeed).subtract(this.vel);
+	},
+
+	flee: function(targetPos) {
+		this.vForce.set(this.vEntityCenter).subtract(targetPos).normalize().scale(this.maxSpeed).subtract(this.vel);
 	}
 });
 

@@ -14,8 +14,6 @@ EntityWolf = ig.Entity.extend({
 
 	animSheet: new ig.AnimationSheet('media/wolf.png', 8, 8),
 
-	getNeighborsEntityType: 'EntityWolf',
-
 	wallAvoidanceActive: true,
 	wanderActive: true,
 
@@ -23,14 +21,6 @@ EntityWolf = ig.Entity.extend({
 		this.addAnim('idle', 5, [0]);
 
 		this.parent(x, y, settings);
-	},
-
-	update: function() {
-		this.parent();
-	},
-
-	draw: function() {
-		this.parent();
 	}
 });
 
