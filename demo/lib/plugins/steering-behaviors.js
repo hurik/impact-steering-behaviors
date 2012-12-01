@@ -30,7 +30,7 @@ ig.module(
 )
 .defines(function() {
 
-ig.Entity.inject({
+SteeringBehaviorsEntity = ig.Entity.extend({
 	// ---- Global settings ----
 	maxForce: 500,
 	// maxSpeed is limiting the vel, maxVel is not used anymore

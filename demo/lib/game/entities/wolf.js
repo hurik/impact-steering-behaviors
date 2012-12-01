@@ -2,11 +2,11 @@ ig.module(
 	'game.entities.wolf'
 )
 .requires(
-	'impact.entity'
+	'plugins.steering-behaviors'
 )
 .defines(function() {
 
-EntityWolf = ig.Entity.extend({
+EntityWolf = SteeringBehaviorsEntity.extend({
 	size: {
 		x: 8,
 		y: 8

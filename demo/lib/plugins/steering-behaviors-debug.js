@@ -24,12 +24,12 @@ ig.module(
 	'plugins.steering-behaviors-debug' 
 )
 .requires(
-	'impact.debug.menu',
-	'impact.entity'
+	'plugins.steering-behaviors',
+	'impact.debug.menu'
 )
 .defines(function(){
 
-ig.Entity.inject({
+SteeringBehaviorsEntity.inject({
 	draw: function() {
 		this.parent();
 

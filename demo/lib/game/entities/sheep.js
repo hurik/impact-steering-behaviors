@@ -2,11 +2,11 @@ ig.module(
 	'game.entities.sheep'
 )
 .requires(
-	'impact.entity'
+	'plugins.steering-behaviors'
 )
 .defines(function() {
 
-EntitySheep = ig.Entity.extend({
+EntitySheep = SteeringBehaviorsEntity.extend({
 	size: {
 		x: 8,
 		y: 8
