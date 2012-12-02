@@ -1,0 +1,47 @@
+ig.module( 
+	'game.main' 
+)
+.requires(
+	'impact.game',
+
+	// Plugins
+	'plugins.steering-behaviors',
+
+	// Debug
+	'impact.debug.debug',
+	'plugins.steering-behaviors-debug',
+
+	// Maps
+	'game.levels.example'
+)
+.defines(function(){
+
+MyGame = ig.Game.extend({
+	font: new ig.Font('media/04b03.font.png'),
+
+	init: function() {
+		// Initialize your game here; bind keys etc.
+		ig.input.bind(ig.KEY.MOUSE1, 'changeTargetPosition');
+		ig.input.bind(ig.KEY.SPACE, 'seekOrFlee');
+
+		this.loadLevel(LevelExample);
+	},
+
+	update: function() {
+		// Update all entities and backgroundMaps
+		this.parent();
+
+		// Add your own, additional update code here
+	},
+
+	draw: function() {
+		// Draw all entities and backgroundMaps
+		this.parent();
+
+		// Add your own drawing code here
+	}
+});
+
+ig.main('#canvas', MyGame, 60, 400, 240, 1);
+
+});
