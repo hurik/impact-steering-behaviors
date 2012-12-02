@@ -46,6 +46,10 @@ SteeringBehaviorsEntity = ig.Entity.extend({
 	// Seek
 	vSeekTarget: new ig.Vec2(0, 0),
 
+	// Arrive
+	vArriveTo: new ig.Vec2(0, 0),
+	arriveFactor: 1,
+
 	// Wander
 	wanderRadius: 16,
 	wanderDistance: 12,
@@ -60,6 +64,7 @@ SteeringBehaviorsEntity = ig.Entity.extend({
 	wallAvoidanceWeight: 20,
 	fleeWeight: 5,
 	seekWeight: 5,
+	arriveWeight: 5,
 	separationWeight: 60,
 	alignmentWeight: 20,
 	cohesionWeight: 1.25,
@@ -70,6 +75,7 @@ SteeringBehaviorsEntity = ig.Entity.extend({
 	wallAvoidanceActive: false,
 	fleeActive: false,
 	seekActive: false,
+	arriveActive: false,
 	separationActive: false,
 	alignmentActive: false,
 	cohesionActive: false,
@@ -231,6 +237,13 @@ SteeringBehaviorsEntity = ig.Entity.extend({
 		} else if (this.seekActive) {
 			this.seek(this.vSeekTarget);
 			this.vForce.scale(this.seekWeight);
+
+			if(!this.accumulateForce()) {
+				return;
+			}
+		} else if (this.arriveActive) {
+			this.arrive(this.vArriveTo);
+			this.vForce.scale(this.arriveWeight);
 
 			if(!this.accumulateForce()) {
 				return;
@@ -529,6 +542,22 @@ SteeringBehaviorsEntity = ig.Entity.extend({
 
 	flee: function(targetPos) {
 		this.vForce.set(this.vEntityCenter).subtract(targetPos).normalize().scale(this.maxSpeed).subtract(this.vel);
+	},
+
+	arrive: function(targetPos) {
+		this.vForce.set(targetPos).subtract(this.vEntityCenter);
+
+		var distance = this.vForce.magnitude();
+
+		if(distance > 0) {
+			var speed = distance / this.arriveFactor * 0.5;
+
+			speed = Math.min(speed, this.maxSpeed);
+
+			this.vForce.scale(speed / distance).subtract(this.vel);
+		} else {
+			this.vForce.setNull();
+		}
 	}
 });
 

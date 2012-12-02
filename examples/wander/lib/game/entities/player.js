@@ -57,8 +57,8 @@ EntityPlayer = SteeringBehaviorsEntity.extend({
 	draw: function() {
 		if(!ig.global.wm) {
 			ig.game.font.draw('wanderRadius   (r/t): ' + this.wanderRadius, 9, 9, ig.Font.ALIGN.LEFT);
-			ig.game.font.draw('wanderDistance (f/g): ' + this.wanderDistance, 9, 18, ig.Font.ALIGN.LEFT);
-			ig.game.font.draw('wanderJitter   (v/b): ' + this.wanderJitter, 9, 27, ig.Font.ALIGN.LEFT);
+			ig.game.font.draw('wanderDistance (f/g): ' + this.wanderDistance, 9, 17, ig.Font.ALIGN.LEFT);
+			ig.game.font.draw('wanderJitter   (v/b): ' + this.wanderJitter, 9, 25, ig.Font.ALIGN.LEFT);
 		}
 
 		this.parent();
