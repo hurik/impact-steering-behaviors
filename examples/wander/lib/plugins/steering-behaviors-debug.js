@@ -33,6 +33,14 @@ SteeringBehaviorsEntity.inject({
 	draw: function() {
 		this.parent();
 
+		if(SteeringBehaviorsEntity._pursuit && this.pursuitActive) {
+			this._drawCircle(this.vPuPointer, 1, 2, 255, 0, 0, 0.5);
+		}
+
+		if(SteeringBehaviorsEntity._evade && this.evadeActive) {
+			this._drawCircle(this.vEvPointer, 1, 2, 255, 0, 0, 0.5);
+		}
+
 		if(SteeringBehaviorsEntity._wander && this.wanderActive) {
 			var vCircleCenter = this.vHeading.clone().scale(this.wanderDistance).add(this.vEntityCenter);
 			var vMovementPointer = ig.Vec2.sum(vCircleCenter, this.vWanderTargert);
@@ -73,6 +81,8 @@ SteeringBehaviorsEntity.inject({
 	}
 });
 
+SteeringBehaviorsEntity._pursuit = false;
+SteeringBehaviorsEntity._evade = false;
 SteeringBehaviorsEntity._wander = false;
 SteeringBehaviorsEntity._wallAvoidance = false;
 
@@ -82,6 +92,14 @@ ig.debug.addPanel({
 	label: 'Steering Behaviors',
 
 	options: [{
+		name: 'Pursuit',
+		object: SteeringBehaviorsEntity,
+		property: '_pursuit'
+	},{
+		name: 'Evade',
+		object: SteeringBehaviorsEntity,
+		property: '_evade'
+	},{
 		name: 'Wander',
 		object: SteeringBehaviorsEntity,
 		property: '_wander'

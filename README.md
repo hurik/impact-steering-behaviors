@@ -11,6 +11,8 @@ Check out: [http://www.hurik.de/impact-steering-behaviors/](http://www.hurik.de/
 
 ## Live Examples
 * Flee and Seek: [http://www.hurik.de/steering-behaviors/seek-and-flee/](http://www.hurik.de/steering-behaviors/seek-and-flee/)
+* Arrive: [http://www.hurik.de/steering-behaviors/arrive/](http://www.hurik.de/steering-behaviors/arrive/)
+* Pursuit and Evade: [http://www.hurik.de/steering-behaviors/pursuit-and-evade/](http://www.hurik.de/steering-behaviors/pursuit-and-evade/)
 * Wander: [http://www.hurik.de/steering-behaviors/wander/](http://www.hurik.de/steering-behaviors/wander/)
 
 ## Example image

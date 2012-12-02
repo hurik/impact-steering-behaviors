@@ -46,6 +46,12 @@ SteeringBehaviorsEntity = ig.Entity.extend({
 	// Seek
 	vSeekTarget: new ig.Vec2(0, 0),
 
+	// Pursuit
+	pursuitEvader: null,
+
+	// Evade
+	evadePursuer: null,
+
 	// Arrive
 	vArriveTo: new ig.Vec2(0, 0),
 	arriveFactor: 1,
@@ -65,6 +71,8 @@ SteeringBehaviorsEntity = ig.Entity.extend({
 	fleeWeight: 5,
 	seekWeight: 5,
 	arriveWeight: 5,
+	pursuitWeight: 5,
+	evadeWeight: 5,
 	separationWeight: 60,
 	alignmentWeight: 20,
 	cohesionWeight: 1.25,
@@ -76,6 +84,8 @@ SteeringBehaviorsEntity = ig.Entity.extend({
 	fleeActive: false,
 	seekActive: false,
 	arriveActive: false,
+	pursuitActive: false,
+	evadeActive: false,
 	separationActive: false,
 	alignmentActive: false,
 	cohesionActive: false,
@@ -89,6 +99,12 @@ SteeringBehaviorsEntity = ig.Entity.extend({
 	vHeadingPerp: new ig.Vec2(1, 0),
 	vSteeringForce: new ig.Vec2(0, 0),
 	vForce: new ig.Vec2(0, 0),
+
+	// Pursuit
+	vPuPointer: new ig.Vec2(0, 0),
+
+	// Evade
+	vEvPointer: new ig.Vec2(0, 0),
 
 	// Wander
 	vWanderTargert: new ig.Vec2(0, 0),
@@ -244,6 +260,20 @@ SteeringBehaviorsEntity = ig.Entity.extend({
 		} else if (this.arriveActive) {
 			this.arrive(this.vArriveTo);
 			this.vForce.scale(this.arriveWeight);
+
+			if(!this.accumulateForce()) {
+				return;
+			}
+		} else if (this.pursuitActive) {
+			this.pursuit(this.pursuitEvader);
+			this.vForce.scale(this.arriveWeight);
+
+			if(!this.accumulateForce()) {
+				return;
+			}
+		} else if (this.evadeActive) {
+			this.evade(this.evadePursuer);
+			this.vForce.scale(this.evadeWeight);
 
 			if(!this.accumulateForce()) {
 				return;
@@ -558,6 +588,36 @@ SteeringBehaviorsEntity = ig.Entity.extend({
 		} else {
 			this.vForce.setNull();
 		}
+	},
+
+	pursuit: function(evader) {
+		this.vPuPointer.set(evader.vEntityCenter).subtract(this.vEntityCenter);
+
+		var relativeHeading = ig.Vec2.dot(this.vHeading, evader.vHeading);
+
+		if(ig.Vec2.dot(this.vPuPointer, this.vHeading) > 0 && relativeHeading < -0.95) {
+			this.vPuPointer.set(evader.vEntityCenter);
+
+			this.seek(evader.vEntityCenter);
+		} else {
+			var evaderSpeed = Math.sqrt(evader.vel.x * evader.vel.x + evader.vel.y * evader.vel.y);
+			var lookAheadTime = this.vPuPointer.magnitude() / (this.maxSpeed + evaderSpeed);
+
+			this.vPuPointer.set(evader.vel).scale(lookAheadTime).add(evader.vEntityCenter);
+
+			this.seek(this.vPuPointer);
+		}
+	},
+
+	evade: function(pursuer) {
+		this.vEvPointer.set(pursuer.vEntityCenter).subtract(this.vEntityCenter);
+
+		var pursuerSpeed = Math.sqrt(pursuer.vel.x * pursuer.vel.x + pursuer.vel.y * pursuer.vel.y);
+		var lookAheadTime = this.vEvPointer.magnitude() / (this.maxSpeed + pursuerSpeed);
+
+		this.vEvPointer.set(pursuer.vel).scale(lookAheadTime).add(pursuer.vEntityCenter);
+
+		this.flee(this.vEvPointer);
 	}
 });
 
