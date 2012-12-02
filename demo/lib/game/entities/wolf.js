@@ -14,8 +14,14 @@ EntityWolf = SteeringBehaviorsEntity.extend({
 
 	animSheet: new ig.AnimationSheet('media/wolf.png', 8, 8),
 
+	maxForce: 500,
+
 	wallAvoidanceActive: true,
 	wanderActive: true,
+
+	wallAvoidanceWeight: 20,
+
+	wanderWeight: 5,
 
 	init: function(x, y, settings) {
 		this.addAnim('idle', 5, [0]);

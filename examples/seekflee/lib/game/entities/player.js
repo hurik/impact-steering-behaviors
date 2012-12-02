@@ -70,10 +70,12 @@ EntityPlayer = SteeringBehaviorsEntity.extend({
 			}
 		}
 
+
+
 		if(this.state == 0) {
-			this.vSeekTarget.set(this.target.pos);
+			this.vSeekTarget.set({x: this.target.pos.x + this.target.size.x / 2, y: this.target.pos.y + this.target.size.y / 2});
 		} else {
-			this.vFleeFrom.set(this.target.pos);
+			this.vFleeFrom.set({x: this.target.pos.x + this.target.size.x / 2, y: this.target.pos.y + this.target.size.y / 2});
 		}
 
 		this.parent();
@@ -89,6 +91,7 @@ EntityPlayer = SteeringBehaviorsEntity.extend({
 
 			ig.game.font.draw('maxForce  (r/t): ' + this.maxForce, 1, 9, ig.Font.ALIGN.LEFT);
 			ig.game.font.draw('maxSpeed (f/g): ' + this.maxSpeed, 1, 18, ig.Font.ALIGN.LEFT);
+			ig.game.font.draw('Click on the map to move the target!', 1, 27, ig.Font.ALIGN.LEFT);
 		}
 
 		this.parent();

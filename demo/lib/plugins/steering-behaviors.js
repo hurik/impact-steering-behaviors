@@ -47,8 +47,8 @@ SteeringBehaviorsEntity = ig.Entity.extend({
 	vSeekTarget: new ig.Vec2(0, 0),
 
 	// Wander
-	wanderRadius: 20,
-	wanderDistance: 40,
+	wanderRadius: 16,
+	wanderDistance: 12,
 	wanderJitter: 200,
 
 	// Get Neighbors
@@ -57,13 +57,13 @@ SteeringBehaviorsEntity = ig.Entity.extend({
 
 
 	// ---- Steering behaviors weight ----
-	wallAvoidanceWeight: 10,
-	fleeWeight: 1,
-	seekWeight: 1,
-	separationWeight: 1,
-	alignmentWeight: 1,
-	cohesionWeight: 1,
-	wanderWeight: 1,
+	wallAvoidanceWeight: 20,
+	fleeWeight: 5,
+	seekWeight: 5,
+	separationWeight: 60,
+	alignmentWeight: 20,
+	cohesionWeight: 1.25,
+	wanderWeight: 2,
 
 
 	// ---- Steering behaviors switches ----

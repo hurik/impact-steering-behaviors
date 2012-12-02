@@ -9,5 +9,9 @@ In the Impact Game Engine Forum: [http://impactjs.com/forums/code/steering-behav
 ## Live Demo
 Check out: [http://www.hurik.de/impact-steering-behaviors/](http://www.hurik.de/impact-steering-behaviors/)
 
+## Live Examples
+* Flee and Seek: [http://www.hurik.de/steering-behaviors/seek-and-flee/](http://www.hurik.de/steering-behaviors/seek-and-flee/)
+* Wander: [http://www.hurik.de/steering-behaviors/wander/](http://www.hurik.de/steering-behaviors/wander/)
+
 ## Example image
 ![Screen shot 1](/hurik/impact-steering-behaviors/raw/master/example.png)

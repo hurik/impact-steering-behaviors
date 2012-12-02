@@ -16,11 +16,20 @@ EntitySheep = SteeringBehaviorsEntity.extend({
 
 	getNeighborsEntityType: 'EntitySheep',
 
+	maxForce: 500,
+
 	wallAvoidanceActive: true,
 	separationActive: true,
 	alignmentActive: true,
 	cohesionActive: true,
 	wanderActive: true,
+
+	wallAvoidanceWeight: 20,
+	fleeWeight: 5,
+	separationWeight: 60,
+	alignmentWeight: 20,
+	cohesionWeight: 1.25,
+	wanderWeight: 5,
 
 	wolf: null,
 	wolfLosRes: {

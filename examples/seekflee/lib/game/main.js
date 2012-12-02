@@ -17,7 +17,7 @@ ig.module(
 .defines(function(){
 
 MyGame = ig.Game.extend({
-	font: new ig.Font('media/04b03.font.png'),
+	font: new ig.Font('media/font.png'),
 
 	init: function() {
 		// Initialize your game here; bind keys etc.
