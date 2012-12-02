@@ -65,6 +65,10 @@ SteeringBehaviorsEntity = ig.Entity.extend({
 	interposeTargetA: null,
 	interposeTargetB: null,
 
+	// Offset Pursuit
+	offsetPursuitLeader: null,
+	vOffsetPursuitOffset: new ig.Vec2(0, 0),
+
 	// Get Neighbors
 	getNeighborsDistance: 40,
 	getNeighborsEntityType: '',
@@ -79,6 +83,7 @@ SteeringBehaviorsEntity = ig.Entity.extend({
 	evadeWeight: 5,
 	wanderWeight: 2,
 	interposeWeight: 5,
+	offsetPursuitWeight: 5,
 	separationWeight: 60,
 	alignmentWeight: 20,
 	cohesionWeight: 1.25,
@@ -93,6 +98,7 @@ SteeringBehaviorsEntity = ig.Entity.extend({
 	evadeActive: false,
 	wanderActive: false,
 	interposeActive: false,
+	offsetPursuitActive: false,
 	separationActive: false,
 	alignmentActive: false,
 	cohesionActive: false,
@@ -119,6 +125,10 @@ SteeringBehaviorsEntity = ig.Entity.extend({
 	vInMidPoint: new ig.Vec2(0, 0),
 	vInPositionA: new ig.Vec2(0, 0),
 	vInPositionB: new ig.Vec2(0, 0),
+
+	// Offset Pursuit
+	vOfPuOffsetPoint: new ig.Vec2(0, 0),
+	vOfPuPoint: new ig.Vec2(0, 0),
 
 	// Wall Avoidance
 	vWaAvOuterDistance: new ig.Vec2(0, 0),
@@ -292,6 +302,13 @@ SteeringBehaviorsEntity = ig.Entity.extend({
 		} else if(this.interposeActive) {
 			this.interpose(this.interposeTargetA, this.interposeTargetB);
 			this.vForce.scale(this.interposeWeight);
+
+			if(!this.accumulateForce()) {
+				return;
+			}
+		} else if(this.offsetPursuitActive) {
+			this.offsetPursuit(this.offsetPursuitLeader, this.offsetPursuitOffset);
+			this.vForce.scale(this.offsetPursuitWeight);
 
 			if(!this.accumulateForce()) {
 				return;
@@ -649,6 +666,19 @@ SteeringBehaviorsEntity = ig.Entity.extend({
 		this.vInMidPoint.set(this.vInPositionA).add(this.vInPositionB).scale(1 / 2);
 
 		this.arrive(this.vInMidPoint);
+	},
+
+	offsetPursuit: function(leader, offset) {
+		this.vOfPuOffsetPoint.set(this.vOffsetPursuitOffset).rotate(leader.vHeading.azimuth() - Math.PI / 2).add(leader.vEntityCenter);
+
+		this.vOfPuPoint.set(this.vOfPuOffsetPoint).subtract(this.vEntityCenter);
+
+		var leaderSpeed = Math.sqrt(leader.vel.x * leader.vel.x + leader.vel.y * leader.vel.y);
+		var lookaheadTime = this.vOfPuPoint.magnitude() / (this.maxSpeed + leaderSpeed);
+
+		this.vOfPuPoint.set(leader.vel).scale(lookaheadTime).add(this.vOfPuOffsetPoint);
+
+		this.arrive(this.vOfPuPoint);
 	}
 });
 

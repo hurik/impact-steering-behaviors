@@ -57,6 +57,12 @@ SteeringBehaviorsEntity.inject({
 			this._drawCircle(this.vInMidPoint, 3, 2, 255, 0, 0, 0.5);
 		}
 
+		if(SteeringBehaviorsEntity._offsetPursuit && this.offsetPursuitActive) {
+			this._drawCircle(this.vOfPuPoint, 1, 2, 255, 0, 0, 0.5);
+			this._drawCircle(this.vOfPuOffsetPoint, 2, 1, 255, 0, 0, 0.5);
+			this._drawLine(this.vOfPuPoint, this.vOfPuOffsetPoint, 1, 255, 0, 0, 0.5);
+		}
+
 		if(SteeringBehaviorsEntity._wallAvoidance && this.wallAvoidanceActive) {
 			this._drawLine(this.vWaAvOuterLeftStart, this.vWaAvOuterLeftEnd, 1, 255, 0, 0, 0.5);
 			this._drawLine(this.vWaAvFrontLeftStart, this.vWaAvFrontLeftEnd, 1, 255, 0, 0, 0.5);
@@ -92,6 +98,7 @@ SteeringBehaviorsEntity._pursuit = false;
 SteeringBehaviorsEntity._evade = false;
 SteeringBehaviorsEntity._wander = false;
 SteeringBehaviorsEntity._interpose = false;
+SteeringBehaviorsEntity._offsetPursuit = false;
 SteeringBehaviorsEntity._wallAvoidance = false;
 
 ig.debug.addPanel({
@@ -115,6 +122,10 @@ ig.debug.addPanel({
 		name: 'Interpose',
 		object: SteeringBehaviorsEntity,
 		property: '_interpose'
+	}, {
+		name: 'Offset Pursuit',
+		object: SteeringBehaviorsEntity,
+		property: '_offsetPursuit'
 	}, {
 		name: 'Wall Avoidance',
 		object: SteeringBehaviorsEntity,
