@@ -14,7 +14,7 @@ Check out: [http://www.hurik.de/impact-steering-behaviors/](http://www.hurik.de/
 * Arrive: [http://www.hurik.de/steering-behaviors/arrive/](http://www.hurik.de/steering-behaviors/arrive/)
 * Pursuit and Evade: [http://www.hurik.de/steering-behaviors/pursuit-and-evade/](http://www.hurik.de/steering-behaviors/pursuit-and-evade/)
 * Wander: [http://www.hurik.de/steering-behaviors/wander/](http://www.hurik.de/steering-behaviors/wander/)
-* Wander: [http://www.hurik.de/steering-behaviors/interpose/](http://www.hurik.de/steering-behaviors/interpose/)
+* Interpose: [http://www.hurik.de/steering-behaviors/interpose/](http://www.hurik.de/steering-behaviors/interpose/)
 
 ## Example image
 ![Screen shot 1](/hurik/impact-steering-behaviors/raw/master/example.png)
