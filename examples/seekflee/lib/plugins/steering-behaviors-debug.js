@@ -50,6 +50,13 @@ SteeringBehaviorsEntity.inject({
 			this._drawCircle(vMovementPointer, 1, 2, 255, 0, 0, 0.5);
 		}
 
+		if(SteeringBehaviorsEntity._interpose && this.interposeActive) {
+			this._drawCircle(this.vInPositionA, 1, 2, 255, 0, 0, 0.5);
+			this._drawCircle(this.vInPositionB, 1, 2, 255, 0, 0, 0.5);
+			this._drawLine(this.vInPositionA, this.vInPositionB, 1, 255, 0, 0, 0.5);
+			this._drawCircle(this.vInMidPoint, 3, 2, 255, 0, 0, 0.5);
+		}
+
 		if(SteeringBehaviorsEntity._wallAvoidance && this.wallAvoidanceActive) {
 			this._drawLine(this.vWaAvOuterLeftStart, this.vWaAvOuterLeftEnd, 1, 255, 0, 0, 0.5);
 			this._drawLine(this.vWaAvFrontLeftStart, this.vWaAvFrontLeftEnd, 1, 255, 0, 0, 0.5);
@@ -84,6 +91,7 @@ SteeringBehaviorsEntity.inject({
 SteeringBehaviorsEntity._pursuit = false;
 SteeringBehaviorsEntity._evade = false;
 SteeringBehaviorsEntity._wander = false;
+SteeringBehaviorsEntity._interpose = false;
 SteeringBehaviorsEntity._wallAvoidance = false;
 
 ig.debug.addPanel({
@@ -95,14 +103,18 @@ ig.debug.addPanel({
 		name: 'Pursuit',
 		object: SteeringBehaviorsEntity,
 		property: '_pursuit'
-	},{
+	}, {
 		name: 'Evade',
 		object: SteeringBehaviorsEntity,
 		property: '_evade'
-	},{
+	}, {
 		name: 'Wander',
 		object: SteeringBehaviorsEntity,
 		property: '_wander'
+	}, {
+		name: 'Interpose',
+		object: SteeringBehaviorsEntity,
+		property: '_interpose'
 	}, {
 		name: 'Wall Avoidance',
 		object: SteeringBehaviorsEntity,

@@ -61,6 +61,10 @@ SteeringBehaviorsEntity = ig.Entity.extend({
 	wanderDistance: 12,
 	wanderJitter: 200,
 
+	// Interpose
+	interposeTargetA: null,
+	interposeTargetB: null,
+
 	// Get Neighbors
 	getNeighborsDistance: 40,
 	getNeighborsEntityType: '',
@@ -73,10 +77,11 @@ SteeringBehaviorsEntity = ig.Entity.extend({
 	arriveWeight: 5,
 	pursuitWeight: 5,
 	evadeWeight: 5,
+	wanderWeight: 2,
+	interposeWeight: 5,
 	separationWeight: 60,
 	alignmentWeight: 20,
 	cohesionWeight: 1.25,
-	wanderWeight: 2,
 
 
 	// ---- Steering behaviors switches ----
@@ -86,10 +91,11 @@ SteeringBehaviorsEntity = ig.Entity.extend({
 	arriveActive: false,
 	pursuitActive: false,
 	evadeActive: false,
+	wanderActive: false,
+	interposeActive: false,
 	separationActive: false,
 	alignmentActive: false,
 	cohesionActive: false,
-	wanderActive: false,
 
 
 	// ---- Internal ----
@@ -108,6 +114,11 @@ SteeringBehaviorsEntity = ig.Entity.extend({
 
 	// Wander
 	vWanderTargert: new ig.Vec2(0, 0),
+
+	// Interpose
+	vInMidPoint: new ig.Vec2(0, 0),
+	vInPositionA: new ig.Vec2(0, 0),
+	vInPositionB: new ig.Vec2(0, 0),
 
 	// Wall Avoidance
 	vWaAvOuterDistance: new ig.Vec2(0, 0),
@@ -250,30 +261,37 @@ SteeringBehaviorsEntity = ig.Entity.extend({
 			if(!this.accumulateForce()) {
 				return;
 			}
-		} else if (this.seekActive) {
+		} else if(this.seekActive) {
 			this.seek(this.vSeekTarget);
 			this.vForce.scale(this.seekWeight);
 
 			if(!this.accumulateForce()) {
 				return;
 			}
-		} else if (this.arriveActive) {
+		} else if(this.arriveActive) {
 			this.arrive(this.vArriveTo);
 			this.vForce.scale(this.arriveWeight);
 
 			if(!this.accumulateForce()) {
 				return;
 			}
-		} else if (this.pursuitActive) {
+		} else if(this.pursuitActive) {
 			this.pursuit(this.pursuitEvader);
 			this.vForce.scale(this.arriveWeight);
 
 			if(!this.accumulateForce()) {
 				return;
 			}
-		} else if (this.evadeActive) {
+		} else if(this.evadeActive) {
 			this.evade(this.evadePursuer);
 			this.vForce.scale(this.evadeWeight);
+
+			if(!this.accumulateForce()) {
+				return;
+			}
+		} else if(this.interposeActive) {
+			this.interpose(this.interposeTargetA, this.interposeTargetB);
+			this.vForce.scale(this.interposeWeight);
 
 			if(!this.accumulateForce()) {
 				return;
@@ -618,6 +636,19 @@ SteeringBehaviorsEntity = ig.Entity.extend({
 		this.vEvPointer.set(pursuer.vel).scale(lookAheadTime).add(pursuer.vEntityCenter);
 
 		this.flee(this.vEvPointer);
+	},
+
+	interpose: function(targetA, targetB) {
+		this.vInMidPoint.set(targetA.vEntityCenter).add(targetB.vEntityCenter).scale(1 / 2);
+
+		var timeToReachMidpoint = ig.Vec2.distance(this.vEntityCenter, this.vInMidPoint) / this.maxSpeed;
+
+		this.vInPositionA.set(targetA.vel).scale(timeToReachMidpoint).add(targetA.vEntityCenter);
+		this.vInPositionB.set(targetB.vel).scale(timeToReachMidpoint).add(targetB.vEntityCenter);
+
+		this.vInMidPoint.set(this.vInPositionA).add(this.vInPositionB).scale(1 / 2);
+
+		this.arrive(this.vInMidPoint);
 	}
 });
 

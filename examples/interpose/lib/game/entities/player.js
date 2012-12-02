@@ -14,9 +14,8 @@ EntityPlayer = SteeringBehaviorsEntity.extend({
 
 	animSheet: new ig.AnimationSheet('media/player.png', 8, 8),
 
-	arriveActive: true,
-
-	target: null,
+	maxForce: 50,
+	maxSpeed: 20,
 
 	init: function(x, y, settings) {
 		this.addAnim('idle', 5, [0]);
@@ -27,15 +26,13 @@ EntityPlayer = SteeringBehaviorsEntity.extend({
 	ready: function() {
 		this.parent();
 
-		this.target = ig.game.getEntitiesByType('EntityTarget')[0];
+		this.interposeTargetA = ig.game.getEntitiesByType('EntityOther')[0];
+		this.interposeTargetB = ig.game.getEntitiesByType('EntityOther')[1];
+
+		this.interposeActive = true;
 	},
 
 	update: function() {
-		this.vArriveTo.set({
-			x: this.target.pos.x + this.target.size.x / 2,
-			y: this.target.pos.y + this.target.size.y / 2
-		});
-
 		if(ig.input.pressed('keyR')) {
 			if(this.arriveFactor > 1) {
 				this.arriveFactor--;
@@ -68,18 +65,19 @@ EntityPlayer = SteeringBehaviorsEntity.extend({
 
 		this.parent();
 	},
-	
 
 	draw: function() {
 		if(!ig.global.wm) {
-			ig.game.font.draw('arriveFactor (r/t): ' + this.arriveFactor, 1, 1, ig.Font.ALIGN.LEFT);
-			ig.game.font.draw('maxForce    (f/g): ' + this.maxForce, 1, 9, ig.Font.ALIGN.LEFT);
-			ig.game.font.draw('maxSpeed   (v/b): ' + this.maxSpeed, 1, 17, ig.Font.ALIGN.LEFT);
-			ig.game.font.draw('Click on the map to move the target!', 1, 25, ig.Font.ALIGN.LEFT);
+			ig.game.font.draw('arriveFactor (r/t): ' + this.arriveFactor, 9, 9, ig.Font.ALIGN.LEFT);
+			ig.game.font.draw('maxForce    (f/g): ' + this.maxForce, 9, 17, ig.Font.ALIGN.LEFT);
+			ig.game.font.draw('maxSpeed   (v/b): ' + this.maxSpeed, 9, 25, ig.Font.ALIGN.LEFT);
 		}
 
 		this.parent();
 	}
 });
+
+// Show the debug information from the start
+SteeringBehaviorsEntity._interpose = true;
 
 });
