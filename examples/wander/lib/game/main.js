@@ -21,12 +21,12 @@ MyGame = ig.Game.extend({
 
 	init: function() {
 		// Initialize your game here; bind keys etc.
-		ig.input.bind(ig.KEY.MOUSE1, 'changeTargetPosition');
-		ig.input.bind(ig.KEY.SPACE, 'seekOrFlee');
 		ig.input.bind(ig.KEY.R, 'keyR');
 		ig.input.bind(ig.KEY.T, 'keyT');
 		ig.input.bind(ig.KEY.F, 'keyF');
 		ig.input.bind(ig.KEY.G, 'keyG');
+		ig.input.bind(ig.KEY.V, 'keyV');
+		ig.input.bind(ig.KEY.B, 'keyB');
 
 		this.loadLevel(LevelExample);
 	},

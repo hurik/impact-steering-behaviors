@@ -32,9 +32,9 @@ ig.module(
 
 SteeringBehaviorsEntity = ig.Entity.extend({
 	// ---- Global settings ----
-	maxForce: 500,
+	maxForce: 20,
 	// maxSpeed is limiting the vel, maxVel is not used anymore
-	maxSpeed: 50,
+	maxSpeed: 100,
 
 	// ---- Steering behaviors settings ----
 	// Wall Avoidance
@@ -57,13 +57,13 @@ SteeringBehaviorsEntity = ig.Entity.extend({
 
 
 	// ---- Steering behaviors weight ----
-	wallAvoidanceWeight: 20,
-	fleeWeight: 5,
-	seekWeight: 5,
-	separationWeight: 60,
-	alignmentWeight: 20,
-	cohesionWeight: 1.25,
-	wanderWeight: 2,
+	wallAvoidanceWeight: 10,
+	fleeWeight: 1,
+	seekWeight: 1,
+	separationWeight: 1,
+	alignmentWeight: 1,
+	cohesionWeight: 1,
+	wanderWeight: 1,
 
 
 	// ---- Steering behaviors switches ----

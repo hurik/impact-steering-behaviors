@@ -14,8 +14,6 @@ EntityPlayer = SteeringBehaviorsEntity.extend({
 
 	animSheet: new ig.AnimationSheet('media/player.png', 8, 8),
 
-	maxForce: 20,
-
 	// 0 = seek, 1 = flee
 	state: 0,
 
@@ -37,6 +35,26 @@ EntityPlayer = SteeringBehaviorsEntity.extend({
 	},
 
 	update: function() {
+		if(ig.input.pressed('keyR')) {
+			if(this.wanderRadius) {
+				this.maxForce--;
+			}
+		}
+
+		if(ig.input.pressed('keyT')) {
+			this.maxForce++;
+		}
+
+		if(ig.input.pressed('keyF')) {
+			if(this.wanderDistance) {
+				this.maxSpeed--;
+			}
+		}
+
+		if(ig.input.pressed('keyG')) {
+			this.maxSpeed++;
+		}
+
 		if(ig.input.pressed('seekOrFlee')) {
 			if(this.state == 0) {
 				this.state = 1;
@@ -62,10 +80,15 @@ EntityPlayer = SteeringBehaviorsEntity.extend({
 	},
 
 	draw: function() {
-		if(this.state == 0) {
-			ig.game.font.draw('State: seek\nPress SPACE to change state!', 1, 1, ig.Font.ALIGN.LEFT);
-		} else {
-			ig.game.font.draw('State: flee\nPress SPACE to change state!', 1, 1, ig.Font.ALIGN.LEFT);
+		if(!ig.global.wm) {
+			if(this.state == 0) {
+				ig.game.font.draw('State   (Space): seek', 1, 1, ig.Font.ALIGN.LEFT);
+			} else {
+				ig.game.font.draw('State   (Space): flee', 1, 1, ig.Font.ALIGN.LEFT);
+			}
+
+			ig.game.font.draw('maxForce  (r/t): ' + this.maxForce, 1, 9, ig.Font.ALIGN.LEFT);
+			ig.game.font.draw('maxSpeed (f/g): ' + this.maxSpeed, 1, 18, ig.Font.ALIGN.LEFT);
 		}
 
 		this.parent();

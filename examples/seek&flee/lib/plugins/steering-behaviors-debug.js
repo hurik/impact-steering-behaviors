@@ -33,7 +33,7 @@ SteeringBehaviorsEntity.inject({
 	draw: function() {
 		this.parent();
 
-		if(ig.Entity._wander && this.wanderActive) {
+		if(SteeringBehaviorsEntity._wander && this.wanderActive) {
 			var vCircleCenter = this.vHeading.clone().scale(this.wanderDistance).add(this.vEntityCenter);
 			var vMovementPointer = ig.Vec2.sum(vCircleCenter, this.vWanderTargert);
 
@@ -42,7 +42,7 @@ SteeringBehaviorsEntity.inject({
 			this._drawCircle(vMovementPointer, 1, 2, 255, 0, 0, 0.5);
 		}
 
-		if(ig.Entity._wallAvoidance && this.wallAvoidanceActive) {
+		if(SteeringBehaviorsEntity._wallAvoidance && this.wallAvoidanceActive) {
 			this._drawLine(this.vWaAvOuterLeftStart, this.vWaAvOuterLeftEnd, 1, 255, 0, 0, 0.5);
 			this._drawLine(this.vWaAvFrontLeftStart, this.vWaAvFrontLeftEnd, 1, 255, 0, 0, 0.5);
 			this._drawLine(this.vWaAvFrontRightStart, this.vWaAvFrontRightEnd, 1, 255, 0, 0, 0.5);
@@ -73,8 +73,8 @@ SteeringBehaviorsEntity.inject({
 	}
 });
 
-ig.Entity._wander = false;
-ig.Entity._wallAvoidance = false;
+SteeringBehaviorsEntity._wander = false;
+SteeringBehaviorsEntity._wallAvoidance = false;
 
 ig.debug.addPanel({
 	type: ig.DebugPanel,
@@ -83,11 +83,11 @@ ig.debug.addPanel({
 
 	options: [{
 		name: 'Wander',
-		object: ig.Entity,
+		object: SteeringBehaviorsEntity,
 		property: '_wander'
 	}, {
 		name: 'Wall Avoidance',
-		object: ig.Entity,
+		object: SteeringBehaviorsEntity,
 		property: '_wallAvoidance'
 	}]
 });
