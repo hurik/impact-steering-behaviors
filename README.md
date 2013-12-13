@@ -18,4 +18,4 @@ Check out: [http://www.andreasgiemza.de/javascript/impact-steering-behaviors/](h
 * Offset Pursuit: [http://www.andreasgiemza.de/steering-behaviors/offset-pursuit/](http://www.andreasgiemza.de/steering-behaviors/offset-pursuit/)
 
 ## Example image
-![Screen shot 1](https://raw.github.com/hurik/impact-steering-behaviors/raw/master/example.png)
+![Screen shot 1](https://raw.github.com/hurik/impact-steering-behaviors/master/example.png)
